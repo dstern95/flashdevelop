@@ -2,12 +2,25 @@ using System;
 using System.IO;
 using ProjectManager.Projects;
 using ProjectManager.Projects.Building;
+using PluginCore.Helpers;
 
 namespace FDBuild.Building
 {
     class SwfmillLibraryBuilder
     {
-        static public string ExecutablePath;
+        string SwfmillPath
+        {
+            get
+            {
+                string swfmillDir = Path.Combine(PathHelper.ToolDir, "swfmill");
+                string swfmillPath = Path.Combine(swfmillDir, "swfmill.exe");
+
+                if (File.Exists(swfmillPath))
+                    return swfmillPath;
+                else
+                    return "swfmill.exe"; // hope you have it in your environment path!
+            }
+        }
 
         public int Frame;
 
@@ -91,7 +104,7 @@ namespace FDBuild.Building
                     if (verbose)
                         ProjectBuilder.Log("swfmill " + arguments);
 
-                    if (!ProcessRunner.Run(ExecutablePath, arguments, true))
+                    if (!ProcessRunner.Run(SwfmillPath, arguments, true))
                         throw new BuildException("Build halted with errors (swfmill).");
 
                     // ok, we just generated a swf with all our resources ... save it for

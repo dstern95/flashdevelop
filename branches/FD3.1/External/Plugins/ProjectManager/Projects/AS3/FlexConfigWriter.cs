@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using ProjectManager.Projects.AS3;
+using System;
 
 namespace FDBuild.Building.AS3
 {

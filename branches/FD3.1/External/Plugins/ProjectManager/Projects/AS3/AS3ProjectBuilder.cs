@@ -37,7 +37,15 @@ namespace ProjectManager.Projects.Building.AS3
                 throw new Exception("Could not locate lib\\mxmlc.jar in Flex SDK. Please set the correct path to the Flex SDK in AS3Context plugin settings.");
 
             if (fcsh == null)
-                fcsh = new FlexCompilerShell();
+            {
+                string server = PluginMain.Settings.FcshServer;
+
+                if (!string.IsNullOrEmpty(server))
+                    fcsh = (FlexCompilerShell)Activator.GetObject(typeof(FlexCompilerShell),
+                        "tcp://" + server + ":20202/FlexCompilerShell");
+                else
+                    fcsh = new FlexCompilerShell();
+            }
 
             string tempFile = null;
             
@@ -103,7 +111,7 @@ namespace ProjectManager.Projects.Building.AS3
                 string output;
                 string[] errors;
                 string jvmarg = VMARGS + " -Dapplication.home=\""+ sdkPath + "\" -jar \"" + fcshPath + "\"";
-                fcsh.Compile(workingdir, configChanged, arguments, out output, out errors, jvmarg);
+                fcsh.Compile(workingdir, arguments, out output, out errors, jvmarg);
 
                 Log(output);
                 foreach (string error in errors)

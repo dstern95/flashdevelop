@@ -184,6 +184,12 @@ namespace ProjectManager
             set { shortcutBuildProject = value; }
         }
 
+        [DisplayName("FCSH Server")]
+        [Description("Specifies the hostname or IP address of the optional FcshServer daemon.")]
+        [Category("Advanced")]
+        [DefaultValue("")]
+        public string FcshServer { get; set; }
+
         #endregion
 
         [Browsable(false)]

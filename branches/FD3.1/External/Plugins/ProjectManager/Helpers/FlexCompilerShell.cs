@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
-using System.Threading;
 using System.Text.RegularExpressions;
-using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace ProjectManager.Helpers
 {
@@ -50,7 +48,7 @@ namespace ProjectManager.Helpers
             process.StartInfo.StandardOutputEncoding = Encoding.Default;
             process.StartInfo.StandardErrorEncoding = Encoding.Default;
             process.StartInfo.CreateNoWindow = true;
-            process.StartInfo.FileName = "java.exe";
+            process.StartInfo.FileName = Environment.OSVersion.Platform == PlatformID.Unix ? "java" : "java.exe";
             process.StartInfo.Arguments = jvmarg;
             process.StartInfo.WorkingDirectory = workingDir;
             process.Start();
@@ -66,7 +64,7 @@ namespace ProjectManager.Helpers
             throw new Exception("Process Exited");
         }
 
-        public void Compile(string projectPath, bool configChanged, string arguments,
+        public virtual void Compile(string projectPath, string arguments,
             out string output, out string[] errors, string jvmarg)
         {
             StringBuilder o = new StringBuilder();
@@ -115,7 +113,7 @@ namespace ProjectManager.Helpers
                 // force a fresh compile
                 lastCompileID = 0;
                 lastArguments = null;
-                Compile(projectPath, true, arguments, out output, out errors, jvmarg);
+                Compile(projectPath, arguments, out output, out errors, jvmarg);
                 return;
             }
             
@@ -134,9 +132,10 @@ namespace ProjectManager.Helpers
         // Run in a separate thread to read errors as they accumulate
         static void ReadErrors()
         {
-            while (process != null && !process.StandardError.EndOfStream)
+            while (process != null)// && !process.StandardError.EndOfStream)
             {
                 string line = process.StandardError.ReadLine().Trim();
+                
                 lock (errorList)
                 {
                     if (line.Length > 0) errorList.Add(line);
@@ -149,9 +148,12 @@ namespace ProjectManager.Helpers
         {
             lastCompileID = 0;
             lastArguments = null;
-            // this will free up our error-reading thread as well.
+            
             if (process != null && !process.HasExited)
                 process.Kill();
+
+            if (errorThread != null && errorThread.IsAlive)
+                errorThread.Abort();
         }
 
         #region FCSH Output Parsing
