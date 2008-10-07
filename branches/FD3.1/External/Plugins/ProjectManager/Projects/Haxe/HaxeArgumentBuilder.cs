@@ -2,11 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using ProjectManager.Projects.Haxe;
 using System.Text.RegularExpressions;
+using ProjectManager.Projects.Haxe;
 
-namespace ProjectManager.Building.Haxe
+namespace ProjectManager.Projects.Building.Haxe
 {
     class HaxeArgumentBuilder : ArgumentBuilder
     {

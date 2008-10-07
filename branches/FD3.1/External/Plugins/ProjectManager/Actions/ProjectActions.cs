@@ -1,19 +1,16 @@
 using System;
-using System.Collections;
-using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 using PluginCore;
-using PluginCore.Managers;
+using PluginCore.Helpers;
 using PluginCore.Localization;
+using PluginCore.Managers;
 using ProjectManager.Controls;
+using ProjectManager.Controls.TreeView;
 using ProjectManager.Helpers;
 using ProjectManager.Projects;
-using ProjectManager.Projects.AS2;
 using ProjectManager.Projects.AS3;
-using PluginCore.Helpers;
-using ProjectManager.Controls.TreeView;
 
 namespace ProjectManager.Actions
 {

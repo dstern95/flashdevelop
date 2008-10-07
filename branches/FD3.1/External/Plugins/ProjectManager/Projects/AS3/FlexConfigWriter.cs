@@ -1,10 +1,8 @@
-using System;
-using System.Collections.Generic;
+using System.Collections;
+using System.IO;
 using System.Text;
 using System.Xml;
 using ProjectManager.Projects.AS3;
-using System.IO;
-using System.Collections;
 
 namespace FDBuild.Building.AS3
 {

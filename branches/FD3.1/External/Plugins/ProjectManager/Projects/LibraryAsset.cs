@@ -1,7 +1,6 @@
 using System;
-using System.IO;
 using System.Collections;
-using System.Diagnostics;
+using System.IO;
 using ProjectManager.Projects.AS2;
 
 namespace ProjectManager.Projects

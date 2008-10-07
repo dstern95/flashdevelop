@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
-using ProjectManager.Projects;
-using ProjectManager.Building;
 using System.IO;
+using ProjectManager.Projects;
+using ProjectManager.Projects.Building;
 
 namespace FDBuild.Building
 {
@@ -30,7 +28,7 @@ namespace FDBuild.Building
                         if (source.LastWriteTime != dest.LastWriteTime ||
                             source.Length != dest.Length)
                         {
-                            Console.WriteLine("Updating asset '" + assetName + "'");
+                            ProjectBuilder.Log("Updating asset '" + assetName + "'");
                             File.Copy(updatePath, assetPath, true);
                         }
                     }
@@ -88,10 +86,10 @@ namespace FDBuild.Building
                     if (File.Exists(backupSwfPath))
                         File.Delete(backupSwfPath);
 
-                    Console.WriteLine("Compiling resources");
+                    ProjectBuilder.Log("Compiling resources");
 
                     if (verbose)
-                        Console.WriteLine("swfmill " + arguments);
+                        ProjectBuilder.Log("swfmill " + arguments);
 
                     if (!ProcessRunner.Run(ExecutablePath, arguments, true))
                         throw new BuildException("Build halted with errors (swfmill).");

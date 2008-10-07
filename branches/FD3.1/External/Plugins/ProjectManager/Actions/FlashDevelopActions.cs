@@ -1,11 +1,7 @@
 using System;
-using System.IO;
 using System.Text;
-using System.Collections;
-using System.Diagnostics;
-using WeifenLuo.WinFormsUI;
-using PluginCore.Utilities;
 using PluginCore;
+using PluginCore.Utilities;
 
 namespace ProjectManager.Actions
 {

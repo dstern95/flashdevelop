@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Text;
 using ProjectManager.Projects.AS2;
 using ProjectManager.Projects.AS3;
 using ProjectManager.Projects.Haxe;

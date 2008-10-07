@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{78101C01-E186-4954-B1DD-DEBB7905FAD8}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -99,18 +99,33 @@
     </Compile>
     <Compile Include="Projects\AS2\AS2MovieOptions.cs" />
     <Compile Include="Projects\AS2\AS2Project.cs" />
+    <Compile Include="Projects\AS2\AS2ProjectBuilder.cs" />
     <Compile Include="Projects\AS2\AS2ProjectReader.cs" />
     <Compile Include="Projects\AS2\AS2ProjectWriter.cs" />
+    <Compile Include="Projects\AS2\MtascArgumentBuilder.cs" />
     <Compile Include="Projects\AS2\MtascOptions.cs" />
     <Compile Include="Projects\AS3\AS3MovieOptions.cs" />
     <Compile Include="Projects\AS3\AS3Project.cs" />
+    <Compile Include="Projects\AS3\AS3ProjectBuilder.cs" />
     <Compile Include="Projects\AS3\AS3ProjectReader.cs" />
     <Compile Include="Projects\AS3\AS3ProjectWriter.cs" />
     <Compile Include="Controls\AS3\MxmlFileMapping.cs" />
+    <Compile Include="Projects\AS3\FlexConfigWriter.cs" />
     <Compile Include="Projects\AS3\FlexProjectReader.cs" />
+    <Compile Include="Projects\AS3\MxmlcArgumentBuilder.cs" />
     <Compile Include="Projects\AS3\MxmlcOptions.cs" />
+    <Compile Include="Projects\Building\ArgumentBuilder.cs" />
+    <Compile Include="Projects\Building\BuildEventRunner.cs" />
+    <Compile Include="Projects\Building\BuildException.cs" />
+    <Compile Include="Projects\Building\FileComparer.cs" />
+    <Compile Include="Projects\Building\ProcessRunner.cs" />
+    <Compile Include="Projects\Building\ProjectBuilder.cs" />
+    <Compile Include="Projects\Building\SwfmillLibraryBuilder.cs" />
+    <Compile Include="Projects\Building\SwfmillLibraryWriter.cs" />
     <Compile Include="Projects\CompilerOptions.cs" />
+    <Compile Include="Projects\Haxe\HaxeArgumentBuilder.cs" />
     <Compile Include="Projects\Haxe\HaxeMovieOptions.cs" />
+    <Compile Include="Projects\Haxe\HaxeProjectBuilder.cs" />
     <Compile Include="Projects\Haxe\HaxeProjectReader.cs" />
     <Compile Include="Projects\Haxe\HaxeProjectWriter.cs" />
     <Compile Include="Projects\Haxe\HaxeOptions.cs" />

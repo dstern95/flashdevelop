@@ -1,5 +1,3 @@
-using System;
-using System.Text;
 using System.Drawing;
 
 namespace ProjectManager.Projects

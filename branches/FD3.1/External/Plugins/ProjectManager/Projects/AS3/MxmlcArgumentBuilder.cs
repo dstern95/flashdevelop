@@ -1,11 +1,6 @@
-using System;
-using System.Collections;
-using System.IO;
-using System.Text;
 using ProjectManager.Projects.AS3;
-using System.Runtime.InteropServices;
 
-namespace ProjectManager.Building.AS3
+namespace ProjectManager.Projects.Building.AS3
 {
     class MxmlcArgumentBuilder : ArgumentBuilder
     {
