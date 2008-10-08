@@ -150,14 +150,14 @@ namespace PluginCore
 
         String GetRelativePath(String path);
         String GetAbsolutePath(String path);
-
+        
         #endregion
 
         #region ISolution Properties
 
         String Name { get; }
         String SolutionPath { get; }
-        String[] ProjectPaths { get; }
+        List<IProject> Projects { get; }
 
         #endregion
     }
@@ -173,7 +173,7 @@ namespace PluginCore
         /// When in Release configuration, remove 'debug' from the given path.
         /// Pattern: ([a-zA-Z0-9])[-_.]debug([\\/.])
         /// </summary>
-        String FixDebugReleasePath(string path);
+        String FixDebugReleasePath(String path);
 
         #endregion
 
