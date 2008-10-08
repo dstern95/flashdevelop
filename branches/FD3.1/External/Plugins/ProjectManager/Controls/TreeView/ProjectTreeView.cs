@@ -18,7 +18,7 @@ namespace ProjectManager.Controls.TreeView
     public class ProjectTreeView : DragDropTreeView
 	{
         Dictionary<string, GenericNode> nodeMap;
-		Project project;
+        Project project;
 		string pathToSelect;
 
 		public static ProjectTreeView Instance;

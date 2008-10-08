@@ -45,6 +45,7 @@ namespace ProjectManager.Controls
         public static FDImage HiddenFolder;
 		public static FDImage HiddenFile;
         public static FDImage BlankFile;
+        public static FDImage Solution;
 		public static FDImage Project;
 		public static FDImage Classpath;
 		public static FDImage Font;
@@ -98,6 +99,7 @@ namespace ProjectManager.Controls
             HiddenFolder = GetGray("203");
             HiddenFile = GetResource("Icons.HiddenFile.png");
             BlankFile = GetResource("Icons.BlankPage.png");
+            Solution = GetResource("Icons.Solution.png");
             Project = Get(274);
 			Classpath = Get(98);
 			Font = Get(408);
