@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using PluginCore;
+using System.Collections.Generic;
 
 namespace ProjectManager.Projects
 {
@@ -7,6 +8,8 @@ namespace ProjectManager.Projects
     {
         string path;
         PathCollection projectPaths;
+
+        public List<IProject> Projects { get { return null; } }
 
         public Solution(string path)
         {
@@ -31,12 +34,14 @@ namespace ProjectManager.Projects
 
         public string GetRelativePath(string path)
         {
-            return Projects.ProjectPaths.GetRelativePath(this.Directory, path);
+            //return Projects.ProjectPaths.GetRelativePath(this.Directory, path);
+            return null;
         }
 
         public string GetAbsolutePath(string path)
         {
-            return Projects.ProjectPaths.GetAbsolutePath(this.Directory, path);
+            //return Projects.ProjectPaths.GetAbsolutePath(this.Directory, path);
+            return null;
         }
 
         #endregion
