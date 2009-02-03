@@ -68,12 +68,6 @@ namespace ProjectManager.Projects
                 if (Path.GetFileName(uri.LocalPath).ToLower() == "flashdevelop.exe")
                 {
                     string startupDir = Path.Combine(Path.GetDirectoryName(uri.LocalPath), "FirstRun");
-                    string local = Path.Combine(Path.GetDirectoryName(uri.LocalPath), ".local");
-                    if (!File.Exists(local))
-                    {
-                        String appDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                        startupDir = Path.Combine(appDir, "FlashDevelop");
-                    }
                     string toolsDir = Path.Combine(startupDir, "Tools");
                     string fdbuildDir = Path.Combine(toolsDir, "fdbuild");
                     return Path.Combine(fdbuildDir, "fdbuild.exe");
