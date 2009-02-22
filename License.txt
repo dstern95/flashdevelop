@@ -1,4 +1,4 @@
-Copyright (c) 2005-2008 Mika Palmu - FlashDevelop.org
+Copyright (c) 2005-2009 Mika Palmu - FlashDevelop.org
 
 Portions copyright Weifen Luo, Neil Hodgson, Garrett Serack, ISharpCode, Philippe Elsass, Nick Farina, Alessandro Crugnola and all direct and undirect contributors.
 
