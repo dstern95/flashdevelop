@@ -1,8 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using System.Windows.Forms;
+using ProjectManager.Controls;
+using ProjectManager.Controls.AS2;
+using ProjectManager.Projects.Building;
+using ProjectManager.Projects.Building.AS2;
 
 namespace ProjectManager.Projects.AS2
 {
@@ -21,10 +23,8 @@ namespace ProjectManager.Projects.AS2
 
         public new MtascOptions CompilerOptions { get { return (MtascOptions)base.CompilerOptions; } }
 
-        internal override ProjectManager.Controls.PropertiesDialog CreatePropertiesDialog()
-        {
-            return new ProjectManager.Controls.AS2.AS2PropertiesDialog();
-        }
+        public override PropertiesDialog CreatePropertiesDialog() { return new AS2PropertiesDialog(); }
+        public override ProjectBuilder CreateBuilder() { return new AS2ProjectBuilder(this); }
 
         public override void ValidateBuild(out string error)
         {

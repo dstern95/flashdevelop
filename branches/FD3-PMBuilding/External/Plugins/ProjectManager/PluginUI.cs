@@ -189,8 +189,14 @@ namespace ProjectManager
         public void WatchParentOf(String path)
         {
             String parent = Path.GetDirectoryName(path);
-            WatcherNode node = tree.NodeMap[parent] as WatcherNode;
-            if (node != null) node.UpdateLater();
+            DirectoryNode node = tree.NodeMap[parent] as DirectoryNode;
+            
+            if (node != null)
+            {
+                // refresh it after this thread finishes to prevent weird out-of-order event issues
+                var timer = new Timer { Interval = 1, Enabled = true };
+                timer.Tick += delegate { timer.Enabled = false; node.Refresh(false); };
+            }
         }
 
         /// <summary>

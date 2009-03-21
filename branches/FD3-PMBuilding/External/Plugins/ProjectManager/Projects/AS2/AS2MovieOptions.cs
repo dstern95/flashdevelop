@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace ProjectManager.Projects.AS2
 {
     public class AS2MovieOptions: MovieOptions

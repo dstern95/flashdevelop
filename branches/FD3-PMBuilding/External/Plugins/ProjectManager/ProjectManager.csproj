@@ -99,18 +99,33 @@
     </Compile>
     <Compile Include="Projects\AS2\AS2MovieOptions.cs" />
     <Compile Include="Projects\AS2\AS2Project.cs" />
+    <Compile Include="Projects\AS2\AS2ProjectBuilder.cs" />
     <Compile Include="Projects\AS2\AS2ProjectReader.cs" />
     <Compile Include="Projects\AS2\AS2ProjectWriter.cs" />
+    <Compile Include="Projects\AS2\MtascArgumentBuilder.cs" />
     <Compile Include="Projects\AS2\MtascOptions.cs" />
     <Compile Include="Projects\AS3\AS3MovieOptions.cs" />
     <Compile Include="Projects\AS3\AS3Project.cs" />
+    <Compile Include="Projects\AS3\AS3ProjectBuilder.cs" />
     <Compile Include="Projects\AS3\AS3ProjectReader.cs" />
     <Compile Include="Projects\AS3\AS3ProjectWriter.cs" />
     <Compile Include="Controls\AS3\MxmlFileMapping.cs" />
+    <Compile Include="Projects\AS3\FlexConfigWriter.cs" />
     <Compile Include="Projects\AS3\FlexProjectReader.cs" />
+    <Compile Include="Projects\AS3\MxmlcArgumentBuilder.cs" />
     <Compile Include="Projects\AS3\MxmlcOptions.cs" />
+    <Compile Include="Projects\Building\ArgumentBuilder.cs" />
+    <Compile Include="Projects\Building\BuildEventRunner.cs" />
+    <Compile Include="Projects\Building\BuildException.cs" />
+    <Compile Include="Projects\Building\FileComparer.cs" />
+    <Compile Include="Projects\Building\ProcessRunner.cs" />
+    <Compile Include="Projects\Building\ProjectBuilder.cs" />
+    <Compile Include="Projects\Building\SwfmillLibraryBuilder.cs" />
+    <Compile Include="Projects\Building\SwfmillLibraryWriter.cs" />
     <Compile Include="Projects\CompilerOptions.cs" />
+    <Compile Include="Projects\Haxe\HaxeArgumentBuilder.cs" />
     <Compile Include="Projects\Haxe\HaxeMovieOptions.cs" />
+    <Compile Include="Projects\Haxe\HaxeProjectBuilder.cs" />
     <Compile Include="Projects\Haxe\HaxeProjectReader.cs" />
     <Compile Include="Projects\Haxe\HaxeProjectWriter.cs" />
     <Compile Include="Projects\Haxe\HaxeOptions.cs" />
@@ -120,13 +135,13 @@
     <Compile Include="Projects\BuildEventVars.cs" />
     <Compile Include="Projects\FileInspector.cs" />
     <Compile Include="Projects\HiddenPathCollection.cs" />
-    <Compile Include="Projects\MoreProjectPaths.cs" />
     <Compile Include="Projects\PathCollection.cs" />
     <Compile Include="Projects\Project.cs" />
     <Compile Include="Projects\ProjectLoader.cs" />
     <Compile Include="Projects\ProjectPaths.cs" />
     <Compile Include="Projects\ProjectReader.cs" />
     <Compile Include="Projects\ProjectWriter.cs" />
+    <Compile Include="Projects\Solution.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Controls\BuildEventDialog.cs">
       <SubType>Form</SubType>
@@ -226,5 +241,8 @@
       <Name>PluginCore</Name>
       <Private>False</Private>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Icons\Solution.png" />
   </ItemGroup>
 </Project>

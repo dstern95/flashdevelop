@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace ProjectManager.Building
+namespace ProjectManager.Projects.Building
 {
     public class BuildException : Exception
     {

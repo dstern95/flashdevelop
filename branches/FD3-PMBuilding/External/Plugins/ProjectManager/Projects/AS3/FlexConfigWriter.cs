@@ -1,10 +1,9 @@
-using System;
-using System.Collections.Generic;
+using System.Collections;
+using System.IO;
 using System.Text;
 using System.Xml;
 using ProjectManager.Projects.AS3;
-using System.IO;
-using System.Collections;
+using System;
 
 namespace FDBuild.Building.AS3
 {
@@ -158,8 +157,9 @@ namespace FDBuild.Building.AS3
             // build classpaths
             ArrayList classPaths = new ArrayList(project.AbsoluteClasspaths);
 
-            foreach (string extraClassPath in extraClasspaths)
-                classPaths.Add(extraClassPath);
+            if (extraClasspaths != null)
+                foreach (string extraClassPath in extraClasspaths)
+                    classPaths.Add(extraClassPath);
 
             foreach (string classPath in classPaths)
                 WriteElementPathString("path-element", classPath);

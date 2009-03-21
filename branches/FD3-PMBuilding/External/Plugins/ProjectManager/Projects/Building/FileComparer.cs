@@ -1,8 +1,6 @@
-using System;
 using System.IO;
-using System.Text;
 
-namespace ProjectManager.Building
+namespace ProjectManager.Projects.Building
 {
 	// from: http://support.microsoft.com/default.aspx?scid=kb;EN-US;320348
 	class FileComparer

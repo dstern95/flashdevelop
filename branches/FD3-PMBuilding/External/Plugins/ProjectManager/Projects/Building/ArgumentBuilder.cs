@@ -1,8 +1,6 @@
-using System;
 using System.Collections;
-using System.Text;
 
-namespace ProjectManager.Building
+namespace ProjectManager.Projects.Building
 {
 	class ArgumentBuilder
 	{

@@ -1,11 +1,9 @@
-using System;
 using System.Collections;
 using System.IO;
-using System.Text;
 
 namespace ProjectManager.Projects
 {
-	class FileInspector
+	public class FileInspector
 	{
         public static string[] ExecutableFileTypes = null;
 

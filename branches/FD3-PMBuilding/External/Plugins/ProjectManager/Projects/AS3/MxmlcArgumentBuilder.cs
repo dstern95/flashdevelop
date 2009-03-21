@@ -1,11 +1,6 @@
-using System;
-using System.Collections;
-using System.IO;
-using System.Text;
 using ProjectManager.Projects.AS3;
-using System.Runtime.InteropServices;
 
-namespace ProjectManager.Building.AS3
+namespace ProjectManager.Projects.Building.AS3
 {
     class MxmlcArgumentBuilder : ArgumentBuilder
     {
@@ -55,9 +50,6 @@ namespace ProjectManager.Building.AS3
             if (!options.UseResourceBundleMetadata) AddEq("-use-resource-bundle-metadata", "false");
             if (!options.Warnings) AddEq("-warnings", "false");
             if (debug && options.VerboseStackTraces) AddEq("-verbose-stacktraces", "true");
-            
-            if (options.LinkReport.Length > 0) AddEq("-link-report", project.GetAbsolutePath(options.LinkReport));
-            if (options.LoadExterns.Length > 0) AddEq("-load-externs", project.GetAbsolutePath(options.LoadExterns));
 
             if (options.Additional != null) Add(options.Additional);
         }
