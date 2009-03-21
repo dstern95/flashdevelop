@@ -91,7 +91,7 @@ namespace ProjectManager.Controls.TreeView
             }
             if (items.Count > 0) items.Add(new ToolStripSeparator());
             // get all the generic FD templates
-            foreach (string file in Directory.GetFiles(PathHelper.TemplateDir, "*.fdt"))
+            foreach (string file in Directory.GetFiles(ProjectPaths.FileTemplatesDirectory, "*.fdt"))
             {
                 string name = Path.GetFileNameWithoutExtension(file).ToLower();
                 if (name != "as2" && name != "as3") items.Add(GetGenericAddFile(file));

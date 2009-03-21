@@ -1,11 +1,10 @@
 using System;
-using System.Collections;
-using System.IO;
 using System.Diagnostics;
-using System.Threading;
+using System.IO;
 using System.Text;
+using System.Threading;
 
-namespace ProjectManager.Building
+namespace ProjectManager.Projects.Building
 {
 	public class ProcessRunner
 	{
@@ -27,8 +26,8 @@ namespace ProjectManager.Building
 			process.Start();
 
 			// capture output in a separate thread
-			LineFilter stdoutFilter = new LineFilter(process.StandardOutput,Console.Out);
-			LineFilter stderrFilter = new LineFilter(process.StandardError,Console.Error);
+            LineFilter stdoutFilter = new LineFilter(process.StandardOutput, ProjectBuilder.Log);
+            LineFilter stderrFilter = new LineFilter(process.StandardError, ProjectBuilder.LogError);
 
 			Thread outThread = new Thread(new ThreadStart(stdoutFilter.Filter));
 			Thread errThread = new Thread(new ThreadStart(stderrFilter.Filter));
@@ -45,16 +44,18 @@ namespace ProjectManager.Building
 		}
 	}
 
+    delegate void MessageFilterDelegate(string message);
+
 	class LineFilter
 	{
 		TextReader reader;
-		TextWriter writer;
+        MessageFilterDelegate filter;
 		public int Lines;
 
-		public LineFilter(TextReader reader, TextWriter writer)
+		public LineFilter(TextReader reader, MessageFilterDelegate filter)
 		{
 			this.reader = reader;
-			this.writer = writer;
+            this.filter = filter;
 		}
 
 		public void Filter()
@@ -63,9 +64,8 @@ namespace ProjectManager.Building
 			{
 				string line = reader.ReadLine();
 				if (line == null) break;
-				
-				writer.WriteLine(line);
-				writer.Flush();
+
+                filter(line);
 				
 				if (line.Length > 0) Lines++;
 			}

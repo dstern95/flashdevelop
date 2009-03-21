@@ -1,10 +1,9 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Collections;
+using System.IO;
 using ProjectManager.Projects.AS2;
 
-namespace ProjectManager.Building.AS2
+namespace ProjectManager.Projects.Building.AS2
 {
 	class MtascArgumentBuilder : ArgumentBuilder
 	{

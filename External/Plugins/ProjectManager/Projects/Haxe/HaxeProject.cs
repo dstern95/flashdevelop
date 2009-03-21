@@ -1,8 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using System.Windows.Forms;
+using ProjectManager.Controls;
+using ProjectManager.Projects.Building;
+using ProjectManager.Projects.Building.Haxe;
 
 namespace ProjectManager.Projects.Haxe
 {
@@ -32,6 +33,9 @@ namespace ProjectManager.Projects.Haxe
         {
             get { return MovieOptions.Version == 12; }
         }
+
+        public override PropertiesDialog CreatePropertiesDialog() { return new PropertiesDialog(); }
+        public override ProjectBuilder CreateBuilder() { return new HaxeProjectBuilder(this); }
 
         public override string GetInsertFileText(string inFile, string path, string export, string nodeType)
         {

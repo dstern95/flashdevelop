@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
 using System.IO;
-using PluginCore.Localization;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using ProjectManager.Controls;
+using ProjectManager.Controls.AS3;
+using ProjectManager.Projects.Building;
+using ProjectManager.Projects.Building.AS3;
 
 namespace ProjectManager.Projects.AS3
 {
@@ -35,10 +35,8 @@ namespace ProjectManager.Projects.AS3
 
         public new MxmlcOptions CompilerOptions { get { return (MxmlcOptions)base.CompilerOptions; } }
 
-        internal override ProjectManager.Controls.PropertiesDialog CreatePropertiesDialog()
-        {
-            return new ProjectManager.Controls.AS3.AS3PropertiesDialog();
-        }
+        public override PropertiesDialog CreatePropertiesDialog() { return new AS3PropertiesDialog(); }
+        public override ProjectBuilder CreateBuilder() { return new AS3ProjectBuilder(this); }
 
         public override void ValidateBuild(out string error)
         {

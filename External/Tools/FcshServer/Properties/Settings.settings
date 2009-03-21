@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="FcshServer.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="FromPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">H:\</Value>
+    </Setting>
+    <Setting Name="ToPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">/Users/nick/</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

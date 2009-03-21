@@ -26,6 +26,25 @@ namespace ProjectManager.Controls.TreeView
 		}
 	}
 
+    public class SolutionNode : GenericNode
+    {
+        Solution solution;
+
+        public SolutionNode(Solution solution)
+            : base(solution.Directory)
+        {
+            this.solution = solution;
+            isDraggable = false;
+            isRenamable = false;
+        }
+
+        public override void Refresh(bool recursive)
+        {
+            base.Refresh(recursive);
+            Text = "Solution '" + solution.Name;
+        }
+    }
+
 	public class ClasspathNode : WatcherNode
 	{
 		public ClasspathNode(Project project, string classpath, string text) : base(classpath)

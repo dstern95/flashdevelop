@@ -1,11 +1,9 @@
 using System;
-using System.Collections;
 using System.IO;
 using System.Text;
 using System.Xml;
-using ProjectManager.Projects;
 
-namespace ProjectManager.Building
+namespace ProjectManager.Projects.Building
 {
     // builds a Library.xml file from a .fdp Project
 	public class SwfmillLibraryWriter : XmlTextWriter

@@ -1,9 +1,6 @@
 using System;
-using System.IO;
-using System.Collections;
-using ProjectManager.Projects;
 
-namespace ProjectManager.Building
+namespace ProjectManager.Projects.Building
 {
 	/// <summary>
 	/// Processed pre and post-build steps, filling in project variables
@@ -59,7 +56,7 @@ namespace ProjectManager.Building
                 foreach (BuildEventInfo info in infos)
                     line = line.Replace(info.FormattedName, info.Value);
                 line = project.FixDebugReleasePath(line);
-                Console.WriteLine("cmd: " + line);
+                ProjectBuilder.Log("cmd: " + line);
 
                 string[] tokens = tokenize(line);
                 string command = tokens[0];
@@ -68,7 +65,7 @@ namespace ProjectManager.Building
                 //switch command and act on "recognized" commands
                 switch (command)
                 {
-                    case "BuildProject":
+                    /*case "BuildProject":
                         FDBuild.Program.BuildProject(args);
                         break;
 
@@ -80,7 +77,7 @@ namespace ProjectManager.Building
                     case "RunCompc": 
                         string[] compctokens = tokenize(args);
                         FDBuild.Program.BuildCOMPC(compctokens[0], compctokens[1]);
-                        break;
+                        break;*/
 
                     default:
                         if (!ProcessRunner.Run(command, args, false))

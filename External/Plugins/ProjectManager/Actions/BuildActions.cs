@@ -1,20 +1,17 @@
 using System;
 using System.Collections;
-using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Channels;
-using System.Runtime.Remoting.Channels.Ipc;
 using PluginCore;
-using PluginCore.Managers;
 using PluginCore.Helpers;
 using PluginCore.Localization;
+using PluginCore.Managers;
+using ProjectManager.Controls;
 using ProjectManager.Helpers;
 using ProjectManager.Projects;
 using ProjectManager.Projects.AS2;
 using ProjectManager.Projects.AS3;
-using ProjectManager.Controls;
+using ProjectManager.Projects.Building;
 
 namespace ProjectManager.Actions
 {
@@ -28,13 +25,9 @@ namespace ProjectManager.Actions
 		IMainForm mainForm;
         FDMenus menus;
 		FDProcessRunner fdProcess;
-        string ipcName;
-        static bool usingProjectDefinedCompiler;
-
+        
 		public event BuildCompleteHandler BuildComplete;
         public event BuildCompleteHandler BuildFailed;
-
-        public string IPCName { get { return ipcName; } }
 
 		public BuildActions(IMainForm mainForm, FDMenus menus)
 		{
@@ -43,19 +36,7 @@ namespace ProjectManager.Actions
 
 			// setup FDProcess helper class
 			this.fdProcess = new FDProcessRunner(mainForm);
-
-            // setup remoting service so FDBuild can use our in-memory services like FlexCompilerShell
-            this.ipcName = Guid.NewGuid().ToString();
-            SetupRemotingServer();
 		}
-
-        private void SetupRemotingServer()
-        {
-            IpcChannel channel = new IpcChannel(ipcName);
-            ChannelServices.RegisterChannel(channel, false);
-            RemotingConfiguration.RegisterWellKnownServiceType(
-                typeof(FlexCompilerShell), "FlexCompilerShell", WellKnownObjectMode.Singleton);
-        }
 
         public bool Build(Project project, bool runOutput, bool noTrace)
         {
@@ -101,10 +82,12 @@ namespace ProjectManager.Actions
                     return false;
                 }
 
-                compiler = GetCompilerPath(project);
+                bool isProjectDefinedCompiler;
+                compiler = GetCompilerPath(project, out isProjectDefinedCompiler);
+
                 if (compiler == null || (!Directory.Exists(compiler) && !File.Exists(compiler)))
                 {
-                    if (usingProjectDefinedCompiler)
+                    if (isProjectDefinedCompiler)
                     {
                         string info = TextHelper.GetString("Info.InvalidCustomCompiler");
                         MessageBox.Show(info, TextHelper.GetString("Title.ConfigurationRequired"), MessageBoxButtons.OK);
@@ -123,7 +106,8 @@ namespace ProjectManager.Actions
                 }
             }
 
-            return FDBuild(project, runOutput, noTrace, compiler);
+            BuildUsingProjectBuilder(project, runOutput, noTrace, compiler);
+            return true;
         }
 
         private void RunFlashIDE(bool runOutput, bool noTrace)
@@ -143,63 +127,69 @@ namespace ProjectManager.Actions
             }
         }
 
-        public bool FDBuild(Project project, bool runOutput, bool noTrace, string compiler)
-		{
-			string fdBuildDir = Path.Combine(PathHelper.ToolDir, "fdbuild");
-			string fdBuildPath = Path.Combine(fdBuildDir, "fdbuild.exe");
-
-			string arguments = " -ipc " + ipcName;
-
-            if (compiler != null && compiler.Length > 0)
-                arguments += " -compiler \"" + compiler + "\"";
-
-			if (noTrace)
-				arguments += " -notrace";
-
-            arguments += " -library \"" + PathHelper.LibraryDir + "\"";
-
-            foreach (string cp in PluginMain.Settings.GlobalClasspaths)
-                arguments += " -cp \"" + Environment.ExpandEnvironmentVariables(cp) + "\"";
-			
-			arguments = arguments.Replace("\\\"", "\""); // c# console args[] bugfix
+        public void BuildUsingProjectBuilder(Project project, bool runOutput, bool noTrace, string compiler)
+        {
+            ProjectBuilder builder = project.CreateBuilder();
+            builder.CompilerPath = compiler;
+            builder.ExtraClasspaths = PluginMain.Settings.GlobalClasspaths.ToArray();
+            builder.NoTrace = noTrace;
 
             SetStatusBar(TextHelper.GetString("Info.BuildStarted"));
             menus.DisabledForBuild = true;
             menus.ConfigurationSelector.Enabled = false;
 
-            fdProcess.StartProcess(fdBuildPath, "\"" + project.ProjectPath + "\"" + arguments,
-                project.Directory, delegate(bool success)
+            EventManager.DispatchEvent(this, new NotifyEvent(EventType.ProcessStart));
+
+            // clear the results panel
+            //EventManager.DispatchEvent(this, new DataEvent(EventType.Command, "ResultsPanel.ClearResults", null));
+
+            var invoker = new MethodInvoker(builder.Build);
+            invoker.BeginInvoke(delegate(IAsyncResult result)
+            {
+                mainForm.CurrentDocument.SciControl.Parent.BeginInvoke((MethodInvoker)delegate
                 {
                     menus.DisabledForBuild = false;
                     menus.ConfigurationSelector.Enabled = !project.NoOutput;
 
-                    if (success)
+                    try
                     {
+                        invoker.EndInvoke(result);
+
                         SetStatusBar(TextHelper.GetString("Info.BuildSucceeded"));
                         AddTrustFile(project);
                         OnBuildComplete(runOutput);
+
+                        EventManager.DispatchEvent(this, new TextEvent(EventType.ProcessEnd, "Done (0)"));
                     }
-                    else
+                    catch (Exception e)
                     {
+                        TraceManager.Add(e.Message);
                         SetStatusBar(TextHelper.GetString("Info.BuildFailed"));
                         OnBuildFailed(runOutput);
+
+                        EventManager.DispatchEvent(this, new TextEvent(EventType.ProcessEnd, "Done (1)"));
                     }
                 });
-            return true;
-		}
+            }, null);
+        }
 
         /// <summary>
         /// Retrieve the project language's default compiler path
         /// </summary>
-        /// <param name="project"></param>
         static public string GetCompilerPath(Project project)
+        {
+            bool dontCare;
+            return GetCompilerPath(project, out dontCare);
+        }
+
+        static public string GetCompilerPath(Project project, out bool isProjectDefinedCompiler)
         {
             if (project.Language == "as3" && (project as AS3Project).CompilerOptions.CustomSDK.Length > 0)
             {
-                usingProjectDefinedCompiler = true;
+                isProjectDefinedCompiler = true;
                 return PathHelper.ResolvePath((project as AS3Project).CompilerOptions.CustomSDK, project.Directory);
             }
-            usingProjectDefinedCompiler = false;
+            isProjectDefinedCompiler = false;
 
             Hashtable info = new Hashtable();
             info["language"] = project.Language;

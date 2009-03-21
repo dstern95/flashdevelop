@@ -1,19 +1,18 @@
 using System;
 using System.IO;
-using System.Text;
-using System.Diagnostics;
-using ProjectManager.Projects;
-using ProjectManager.Projects.AS2;
 using FDBuild.Building;
+using PluginCore.Helpers;
+using ProjectManager.Projects.AS2;
 
-namespace ProjectManager.Building.AS2
+namespace ProjectManager.Projects.Building.AS2
 {
 	public class AS2ProjectBuilder : ProjectBuilder
 	{
-		AS2Project project;
+        public new AS2Project Project { get { return (AS2Project)base.Project; } }
 
 		#region Path Helpers
-		string MtascPath
+		
+        string MtascPath
 		{
 			get
 			{
@@ -25,9 +24,7 @@ namespace ProjectManager.Building.AS2
                         return Path.Combine(CompilerPath, "mtasc.exe");
                 }
 
-				// assume that mtasc.exe is probably in a directory alongside fdbuild
-                string upDirectory = Path.GetDirectoryName(FDBuildDirectory);
-				string mtascDir = Path.Combine(upDirectory, "mtasc");
+				string mtascDir = Path.Combine(PathHelper.ToolDir, "mtasc");
 				string mtascPath = Path.Combine(mtascDir, "mtasc.exe");
                 
                 if (File.Exists(mtascPath))
@@ -36,41 +33,38 @@ namespace ProjectManager.Building.AS2
 					return "mtasc.exe"; // hope you have it in your environment path!
 			}
 		}
+
 		#endregion
 
-        public AS2ProjectBuilder(AS2Project project, string compilerPath)
-            : base(project, compilerPath)
-		{
-			this.project = project;
-		}
+        public AS2ProjectBuilder(AS2Project project) : base(project) { }
 
-		protected override void DoBuild(string[] extraClasspaths, bool noTrace)
+		protected override void DoBuild()
 		{
-			Environment.CurrentDirectory = project.Directory;
+			Environment.CurrentDirectory = Project.Directory;
 
-            string outputDir = Path.GetDirectoryName(project.OutputPathAbsolute);
+            string outputDir = Path.GetDirectoryName(Project.OutputPathAbsolute);
             if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
 
             SwfmillLibraryBuilder libraryBuilder = new SwfmillLibraryBuilder();
 
 			// before doing anything else, make sure any resources marked as "keep updated"
 			// are properly kept up to date if possible
-            libraryBuilder.KeepUpdated(project);
+            libraryBuilder.KeepUpdated(Project);
 
             // if we have any resources, build our library file and run swfmill on it
-            libraryBuilder.BuildLibrarySwf(project, project.CompilerOptions.Verbose);
+            libraryBuilder.BuildLibrarySwf(Project, Project.CompilerOptions.Verbose);
 
 			// do we have anything to compile?
-			if (project.CompileTargets.Count > 0 || 
-				project.CompilerOptions.IncludePackages.Length > 0)
+			if (Project.CompileTargets.Count > 0 || 
+				Project.CompilerOptions.IncludePackages.Length > 0)
 			{
-				MtascArgumentBuilder mtasc = new MtascArgumentBuilder(project);
+				MtascArgumentBuilder mtasc = new MtascArgumentBuilder(Project);
 				mtasc.AddCompileTargets();
 				mtasc.AddOutput();
-				mtasc.AddClassPaths(extraClasspaths);
-				mtasc.AddOptions(noTrace);
+				mtasc.AddClassPaths(ExtraClasspaths);
+				mtasc.AddOptions(NoTrace);
 
-				if (project.UsesInjection)
+				if (Project.UsesInjection)
 				{
 					mtasc.AddInput();
 				}
@@ -78,7 +72,7 @@ namespace ProjectManager.Building.AS2
 				{
                     mtasc.AddFrame(libraryBuilder.Frame);
 
-					if (project.LibraryAssets.Count == 0)
+					if (Project.LibraryAssets.Count == 0)
 						mtasc.AddHeader(); // mtasc will have to generate its own output SWF
 					else
 						mtasc.AddKeep(); // keep everything you added with swfmill
@@ -86,8 +80,8 @@ namespace ProjectManager.Building.AS2
 				
 				string mtascArgs = mtasc.ToString();
 
-				if (project.CompilerOptions.Verbose)
-					Console.WriteLine("mtasc " + mtascArgs);
+				if (Project.CompilerOptions.Verbose)
+					Log("mtasc " + mtascArgs);
 
 				if (!ProcessRunner.Run(MtascPath, mtascArgs, false))
 					throw new BuildException("Build halted with errors (mtasc).");
@@ -96,12 +90,12 @@ namespace ProjectManager.Building.AS2
 
 		private void KeepUpdated()
 		{
-			foreach (LibraryAsset asset in project.LibraryAssets)
+			foreach (LibraryAsset asset in Project.LibraryAssets)
 				if (asset.UpdatePath != null)
 				{
 					string assetName = Path.GetFileName(asset.Path);
-					string assetPath = project.GetAbsolutePath(asset.Path);
-					string updatePath = project.GetAbsolutePath(asset.UpdatePath);
+					string assetPath = Project.GetAbsolutePath(asset.Path);
+					string updatePath = Project.GetAbsolutePath(asset.UpdatePath);
 					if (File.Exists(updatePath))
 					{
 						// check size/modified
@@ -111,7 +105,7 @@ namespace ProjectManager.Building.AS2
 						if (source.LastWriteTime != dest.LastWriteTime ||
 							source.Length != dest.Length)
 						{
-							Console.WriteLine("Updating asset '" + assetName + "'");
+							Log("Updating asset '" + assetName + "'");
 							File.Copy(updatePath,assetPath,true);
 						}
 					}

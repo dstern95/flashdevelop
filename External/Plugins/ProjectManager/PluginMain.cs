@@ -1,26 +1,23 @@
 using System;
-using System.IO;
-using System.Drawing;
-using System.Diagnostics;
-using System.Collections;
 using System.Collections.Generic;
-using System.Windows.Forms;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Windows.Forms;
+using PluginCore;
+using PluginCore.Controls;
+using PluginCore.Helpers;
+using PluginCore.Localization;
+using PluginCore.Managers;
+using PluginCore.Utilities;
 using ProjectManager.Actions;
 using ProjectManager.Controls;
 using ProjectManager.Controls.AS2;
-using ProjectManager.Projects.AS3;
 using ProjectManager.Controls.TreeView;
-using WeifenLuo.WinFormsUI.Docking;
-using WeifenLuo.WinFormsUI;
 using ProjectManager.Helpers;
 using ProjectManager.Projects;
-using PluginCore.Localization;
-using PluginCore.Utilities;
-using PluginCore.Managers;
-using PluginCore.Controls;
-using PluginCore.Helpers;
-using PluginCore;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace ProjectManager
 {
@@ -82,7 +79,6 @@ namespace ProjectManager
 
         static string SettingsDir { get { return Path.Combine(PathHelper.DataDir, pluginName); } }
         static string SettingsPath { get { return Path.Combine(SettingsDir, "Settings.fdb"); } }
-        static string FDBuildHints { get { return Path.Combine(SettingsDir, "FDBuildHints.txt"); } }
 
         public void LoadSettings()
         {
@@ -266,8 +262,7 @@ namespace ProjectManager
 
                         vars.AddVar("CompilerPath", cpath);
                         vars.AddVar("BuildConfiguration", pluginUI.IsTraceDisabled ? "release" : "debug");
-                        vars.AddVar("BuildIPC", buildActions.IPCName);
-
+                        
                         foreach (BuildEventInfo info in vars.GetVars())
                             te.Value = te.Value.Replace(info.FormattedName, info.Value);
 

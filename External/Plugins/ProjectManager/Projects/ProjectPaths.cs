@@ -2,10 +2,12 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Reflection;
+using PluginCore.Helpers;
+using System.Collections.Generic;
 
 namespace ProjectManager.Projects
 {
-	public partial class ProjectPaths
+	public class ProjectPaths
 	{
 		public static string GetRelativePath(string baseDirectory, string path)
 		{
@@ -62,5 +64,37 @@ namespace ProjectManager.Projects
 		{
 			get { return Environment.GetFolderPath(Environment.SpecialFolder.Personal); }
 		}
+
+        public static string ProjectTemplatesDirectory
+        {
+            get { return PathHelper.ProjectsDir; }
+        }
+
+        public static string FileTemplatesDirectory
+        {
+            get
+            {
+                string altpath = PluginMain.Settings.AlternateTemplateDir;
+
+                if (altpath != null && altpath.Length > 0)
+                    return altpath;
+                else
+                    return PathHelper.TemplateDir;
+            }
+        }
+
+        public static List<String> GetAllProjectDirs()
+        {
+            List<String> allDirs = new List<String>();
+            if (Directory.Exists(ProjectTemplatesDirectory))
+            {
+                allDirs.AddRange(Directory.GetDirectories(ProjectTemplatesDirectory));
+            }
+            if (Directory.Exists(PathHelper.UserProjectsDir))
+            {
+                allDirs.AddRange(Directory.GetDirectories(PathHelper.UserProjectsDir));
+            }
+            return allDirs;
+        }
 	}
 }

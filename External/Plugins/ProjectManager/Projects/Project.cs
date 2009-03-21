@@ -1,8 +1,8 @@
 using System;
-using System.Collections;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
+using ProjectManager.Controls;
+using ProjectManager.Projects.Building;
 
 namespace ProjectManager.Projects
 {
@@ -70,10 +70,8 @@ namespace ProjectManager.Projects
         public abstract void SaveAs(string fileName);
         public virtual void PropertiesChanged() { }
 
-        internal virtual ProjectManager.Controls.PropertiesDialog CreatePropertiesDialog()
-        {
-            return new ProjectManager.Controls.PropertiesDialog();
-        }
+        public abstract PropertiesDialog CreatePropertiesDialog();
+        public abstract ProjectBuilder CreateBuilder();
 
         protected void OnClasspathChanged()
         {
