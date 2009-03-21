@@ -66,7 +66,7 @@ namespace FDBuild
             }
             catch (Exception exception)
             {
-                Console.Error.WriteLine("Exception: " + exception);
+                Console.Error.WriteLine("Exception: " + exception.Message);
                 return 1;
             }
             finally
@@ -115,6 +115,9 @@ namespace FDBuild
                 settings = (AS3Settings)ObjectSerializer.Deserialize(
                     FDBuildPaths.GetSettingsPath("AS3Context"), settings);
                 builder.CompilerPath = settings.FlexSDK;
+
+                if (string.IsNullOrEmpty(builder.CompilerPath))
+                    throw new Exception("You must specify a path to the Flex SDK, either by passing the 'compiler' argument, or by editing the AS3Context plugin settings inside FlashDevelop (don't forget to restart FD).");
             }
 
             // you also might want some options here
