@@ -1,0 +1,14 @@
+/**
+$(CBI)* ...
+$(CBI)* @author $(DefaultUser)
+$(CBI)*/
+
+package $(Package);
+
+class $(FileName) $(CSLB){
+
+	public function new() $(CSLB){
+		$(EntryPoint)
+	}
+	
+}
