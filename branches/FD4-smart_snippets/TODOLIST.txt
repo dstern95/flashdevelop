@@ -1,0 +1,42 @@
+Debugger stuff:
+
+- Automatically stop Flash player
+- Debugger holds sometimes a file ref
+
+Known issues:
+
+- Very limited FlexBuilder projects support
+- Projects located on shared drives (completion problems, SWC parsing crash,...)
+
+Code refactoring plans:
+
+- Imports automatic cleanup
+- Rename class file to rename in code
+- Duplicate class with new name (would rename in the code too)
+- For more, we need a complete AST
+- Package refactoring
+
+Flex compilation improvements:
+
+- SWF metadata options in projects (title, description, ..)
+- Framework caching
+
+Completion improvements:
+
+- ASCompletion exclusions settings
+- Better completion support for timeline code
+- Smarter function generator (detect parameters type)
+- Add an option to use only package imports (com.domain.package.*)
+- Inheritance explorer: display a type's super & sub classes
+
+Snippets improvements:
+
+- Arguments operations (uppercase, lowercase, substr, repeat,...)
+- Argument to generate import declarations
+
+Other features:
+
+- Xml beautifier/checker
+- Finish haXe projects support (platforms, directives, makefile)
+- Other language completion & projects (JS, etc)
+- New templates
