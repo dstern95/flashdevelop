@@ -197,6 +197,7 @@ namespace ASCompletion.Completion
         internal static void OnTextChanged(ScintillaControl sci, int position, int length, int linesAdded)
         {
             // TODO track text changes -> LastChar
+            
         }
 
         private static void HandleClosingChar(ScintillaControl Sci, int Value, int position)
@@ -1004,12 +1005,17 @@ namespace ASCompletion.Completion
 					return;
 				string txt = Sci.GetLine(line-1).TrimEnd();
 				int style = Sci.BaseStyleAt(position);
+                int styleBefore = Sci.BaseStyleAt(Sci.LineEndPosition(line - 1));
+
+                string sel = Sci.SelText;
 
 				// in comments
                 if (PluginBase.Settings.CommentBlockStyle == CommentBlockStyle.Indented && txt.EndsWith("*/"))
                     FixIndentationAfterComments(Sci, line);
                 else if (IsCommentStyle(style) && (Sci.BaseStyleAt(position + 1) == style))
                     FormatComments(Sci, txt, line);
+                else if (!IsCommentStyle(style) && styleBefore == 2)
+                    FormatLineComments(Sci, txt, line);
                 // in code
                 else
                 {
@@ -1189,6 +1195,24 @@ namespace ASCompletion.Completion
             {
                 Sci.ReplaceSel("* ");
                 int position = Sci.LineIndentPosition(line) + 2;
+                Sci.SetSel(position, position);
+            }
+        }
+        private static void FormatLineComments(ScintillaControl Sci, string txt, int line)
+        {
+            txt = txt.TrimStart();
+            if (txt == "//")
+            {
+                Sci.ReplaceSel("");
+                Sci.CurrentPos = Sci.PositionFromLine(line - 1);
+                Sci.LineDelete();
+                int position = Sci.LineIndentPosition(line - 1);
+                Sci.SetSel(position, position);
+            }
+            else if (txt.StartsWith("//"))
+            {
+                Sci.ReplaceSel("// ");
+                int position = Sci.LineIndentPosition(line) + 3;
                 Sci.SetSel(position, position);
             }
         }
@@ -1869,10 +1893,44 @@ namespace ASCompletion.Completion
                 mix.Merge(decl);
             }
 
+            
+
 			// show
             List<ICompletionListItem> list = new List<ICompletionListItem>();
 			foreach(MemberModel member in mix)
                 list.Add(new MemberItem(member));
+
+            /*
+            // TODO: snippets in completion list
+            if (result.IsNull() || (dotIndex < 0))
+            {
+                MemberList decl = new MemberList();
+                String specificDir = Path.Combine(PathHelper.SnippetDir, ASContext.Context.Settings.LanguageId);
+                String[] files = Directory.GetFiles(specificDir, "*.fds");
+                Hashtable filesTable = new Hashtable();
+                foreach (string snippetName in files)
+                {
+                    filesTable[snippetName] = new FlashDevelop.Managers.SnippetItem(Path.GetFileNameWithoutExtension(snippetName), snippetName);
+                    decl.Add(new MemberModel(snippetName, snippetName, FlagType.Template, 0));
+                }
+                decl.Sort();
+                mix.Merge(decl);
+
+                for (int i = 0; i < decl.Count; i++)
+                {
+                    MemberModel m = decl[i];
+                    for (int j = 0; j < mix.Count; j++)
+                    {
+                        MemberModel mixMember = mix[j];
+                        if (mixMember == m)
+                        {
+                            list.Insert(j, (ICompletionListItem)filesTable[m.Name]);
+                            break;
+                        }
+                    }
+                }
+            }*/
+
 			CompletionList.Show(list, autoHide, tail);
 
             // remember the latest class resolved for completion to store later the inserted member

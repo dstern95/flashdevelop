@@ -1,5 +1,6 @@
 using System;
 using ScintillaNet.Enums;
+using PluginCore.PluginCore;
 
 namespace ScintillaNet
 {
@@ -42,5 +43,6 @@ namespace ScintillaNet
     public delegate void IndicatorReleaseHandler(ScintillaControl sender, int position);
     public delegate void AutoCCancelledHandler(ScintillaControl sender);
     public delegate void AutoCCharDeletedHandler(ScintillaControl sender);
+    public delegate void KeyPressedHandler(ScintillaControl sender, HandleKeyEvent e);
 
 }

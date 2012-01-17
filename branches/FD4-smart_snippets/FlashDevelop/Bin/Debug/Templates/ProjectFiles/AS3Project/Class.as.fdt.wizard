@@ -1,5 +1,6 @@
 package $(Package) $(CSLB){
-$(Import)	/**
+$(Import)	
+	/**
 	$(CBI)* ...
 	$(CBI)* @author $(DefaultUser)
 	$(CBI)*/
@@ -8,6 +9,30 @@ $(Import)	/**
 		public function $(FileName)($(ConstructorArguments)) $(CSLB){
 			$(Super)$(EntryPoint)
 		}
+		
+		// PUBLIC METHODS
+		
+		
+		
+		
+		// PRIVATE METHODS
+		
+		
+		
+		
+		// STATIC METHODS
+		
+		
+		
+		
+		// EVENT HANDLERS
+		
+		
+		
+		
+		// ACCESSORS
+		
+		
 		
 	}
 

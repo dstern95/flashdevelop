@@ -1,3 +1,5 @@
 $(BlankLine)$(Modifiers) function set $(Name)(value:$(Type)):$(Void) $(CSLB){
-	$(Member) = value$(EntryPoint);
+	if (value != $(Member)) $(CSLB){
+		$(Member) = value$(EntryPoint);
+	}
 }

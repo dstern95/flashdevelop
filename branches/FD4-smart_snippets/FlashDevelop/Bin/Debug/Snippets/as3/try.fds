@@ -1,3 +1,6 @@
 try $(CSLB){
 	$(EntryPoint)
+} $(CSLB)catch (err:$(var="Error")) $(CSLB){
+	trace("$(TypName).$(MbrName) error:", err);
 }
+

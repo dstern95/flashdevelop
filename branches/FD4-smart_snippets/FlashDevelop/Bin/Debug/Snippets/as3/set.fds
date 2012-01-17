@@ -1,4 +1,4 @@
-public function set $(EntryPoint)(value):void $(CSLB){
-	
+public function set $(var="name")(value:$(var="type")):void $(CSLB){
+	_$(var="name") = value;$(EntryPoint)
 }
 

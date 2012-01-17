@@ -14,6 +14,8 @@ using PluginCore.Localization;
 using PluginCore.Managers;
 using WeifenLuo.WinFormsUI.Docking;
 using PluginCore.Utilities;
+using PluginCore.PluginCore;
+using FlashDevelop.Managers;
 
 namespace ASCompletion.Completion
 {
@@ -1192,6 +1194,17 @@ namespace ASCompletion.Completion
         {
             int lineNum = Sci.LineFromPosition(Sci.CurrentPos);
             string line = Sci.GetLine(lineNum);
+            int start = Sci.LineIndentPosition(lineNum);
+            int end = Sci.LineEndPosition(lineNum);
+
+            if (start == end)
+            {
+                return;
+            }
+
+            Sci.SetSel(start, end);
+            string value = Sci.SelText;
+
             StatementReturnType returnType = GetStatementReturnType(Sci, inClass, line, Sci.PositionFromLine(lineNum));
 
             if (returnType == null)
@@ -1259,22 +1272,21 @@ namespace ASCompletion.Completion
             string template = TemplateUtils.GetTemplate("AssignVariable");
 
             if (varname != null)
-                template = TemplateUtils.ReplaceTemplateVariable(template, "Name", varname);
+                template = TemplateUtils.ReplaceTemplateVariable(template, "Name", TemplateUtils.CreateSmartSnippet(varname, "name"));
             else
                 template = TemplateUtils.ReplaceTemplateVariable(template, "Name", null);
 
             if (cleanType != null)
-                template = TemplateUtils.ReplaceTemplateVariable(template, "Type", cleanType);
+                template = TemplateUtils.ReplaceTemplateVariable(template, "Type", TemplateUtils.CreateSmartSnippet(cleanType, "type"));
             else
                 template = TemplateUtils.ReplaceTemplateVariable(template, "Type", null);
 
-            int indent = Sci.GetLineIndentation(lineNum);
-            pos = Sci.PositionFromLine(lineNum) + indent / Sci.Indent;
+            if (value != null)
+                template = TemplateUtils.ReplaceTemplateVariable(template, "Value", value);
+            else
+                template = TemplateUtils.ReplaceTemplateVariable(template, "Value", null);
 
-            Sci.CurrentPos = pos;
-            Sci.SetSel(pos, pos);
-            InsertCode(pos, template);
-
+            int diff = 0;
             if (type != null)
             {
                 ClassModel inClassForImport = null;
@@ -1286,14 +1298,25 @@ namespace ASCompletion.Completion
                 {
                     inClassForImport = resolve.RelClass;
                 }
-                else 
+                else
                 {
                     inClassForImport = inClass;
                 }
                 List<string> l = new List<string>();
                 l.Add(getQualifiedType(type, inClassForImport));
-                pos += AddImportsByName(l, Sci.LineFromPosition(pos));
+                diff += AddImportsByName(l, Sci.LineFromPosition(pos));
             }
+
+            start += diff;
+            end += diff;
+
+            lineNum = Sci.LineFromPosition(pos);
+            int indent = Sci.GetLineIndentation(lineNum);
+            pos = Sci.PositionFromLine(lineNum) + indent / Sci.Indent;
+
+            Sci.CurrentPos = start;
+            Sci.SetSel(start, end);
+            InsertCode(start, template);
         }
 
         private static void EventMetatag(ClassModel inClass, ScintillaNet.ScintillaControl Sci, MemberModel member)
@@ -1607,12 +1630,7 @@ namespace ASCompletion.Completion
 
                 int start = mStart.Index + posStart;
                 int end = start + mStart.Length;
-
-                Sci.SetSel(start, end);
-
-                string decl = TemplateUtils.ToDeclarationString(memberModel, TemplateUtils.GetTemplate("MethodDeclaration"));
-                InsertCode(Sci.CurrentPos, "$(Boundary) " + decl);
-
+                int extra = 0;
                 // add imports to function argument types
                 if (functionParameters.Count > 0)
                 {
@@ -1627,10 +1645,21 @@ namespace ASCompletion.Completion
                         {
                         }
                     }
-                    start += AddImportsByName(l, Sci.LineFromPosition(end));
+                    extra += AddImportsByName(l, Sci.LineFromPosition(end));
                 }
 
-                Sci.SetSel(start, start);
+                start += extra;
+                end += extra;
+
+                Sci.SetSel(start, end);
+                string selText = Sci.SelText;
+
+                string decl = TemplateUtils.GetTemplate("MethodDeclaration");
+                decl = TemplateUtils.ReplaceTemplateVariable(decl, "Name", memberModel.Name);
+                decl = TemplateUtils.ToDeclarationString(memberModel, decl);
+                InsertCode(Sci.CurrentPos, "$(Boundary) " + decl);
+
+                
             }
         }
 
@@ -1661,7 +1690,10 @@ namespace ASCompletion.Completion
 
             memberCopy.Parameters.Add(contextMember);
 
-            string template = TemplateUtils.ToDeclarationString(memberCopy, TemplateUtils.GetTemplate("MethodDeclaration"));
+            string template = TemplateUtils.GetTemplate("MethodDeclaration");
+            template = TemplateUtils.ReplaceTemplateVariable(template, "Name", memberCopy.Name);
+            template = TemplateUtils.ReplaceTemplateVariable(template, "Type", memberCopy.Type);
+            template = TemplateUtils.ToDeclarationString(memberCopy, template);
             InsertCode(start, template);
 
             int currPos = Sci.LineEndPosition(currLine);
@@ -1960,7 +1992,7 @@ namespace ASCompletion.Completion
             string result = TemplateUtils.ToDeclarationWithModifiersString(resultMember, template);
             result = TemplateUtils.ReplaceTemplateVariable(result, "Body", "\"[" + inClass.Name + membersString.ToString() + "]\"");
 
-            InsertCode(Sci.CurrentPos, result);
+            InsertCode(Sci.CurrentPos, result, false);
         }
 
         private static void GenerateVariableJob(GeneratorJobType job, ScintillaNet.ScintillaControl Sci, MemberModel member,
@@ -2125,6 +2157,10 @@ namespace ASCompletion.Completion
             else if (eventValue != null)
             {
                 newMember.Type = eventValue;
+            }
+            else
+            {
+                newMember.Type = "Object";
             }
             GenerateVariable(newMember, position, detach);
         }
@@ -2624,7 +2660,7 @@ namespace ASCompletion.Completion
             if (String.IsNullOrEmpty(className)) className = "Class";
             string projFilesDir = Path.Combine(PathHelper.TemplateDir, "ProjectFiles");
             string projTemplateDir = Path.Combine(projFilesDir, project.GetType().Name);
-            string paramsString = TemplateUtils.ParametersString(paramMember, true);
+            string paramsString = TemplateUtils.ParametersString(paramMember, true, false);
             Hashtable info = new Hashtable();
             info["className"] = className;
             info["templatePath"] = Path.Combine(projTemplateDir, "Class.as.fdt");
@@ -2715,14 +2751,16 @@ namespace ASCompletion.Completion
             Sci.CurrentPos = funcBodyStart;
             Sci.SetSel(Sci.CurrentPos, Sci.CurrentPos);
 
-            MemberModel m = new MemberModel(NewName, "", FlagType.LocalVar, 0);
-            m.Value = expression;
+            MemberModel m = new MemberModel(NewName, "type", FlagType.LocalVar, 0);
+            //m.Value = expression;
 
             string snippet = TemplateUtils.GetTemplate("Variable");
             snippet = TemplateUtils.ReplaceTemplateVariable(snippet, "Modifiers", null);
+            snippet = TemplateUtils.ReplaceTemplateVariable(snippet, "Value", expression);
             snippet = TemplateUtils.ToDeclarationString(m, snippet);
             snippet += NewLine + "$(Boundary)";
-            SnippetHelper.InsertSnippetText(Sci, Sci.CurrentPos, snippet);
+            InsertCode(Sci.CurrentPos, snippet);
+            //SnippetHelper.InsertSnippetText(Sci, Sci.CurrentPos, snippet);
         }
 
         public static void GenerateExtractMethod(ScintillaNet.ScintillaControl Sci, string NewName)
@@ -3113,11 +3151,11 @@ namespace ASCompletion.Completion
 
                     string decl = entry ? NewLine : "";
                     if ((method.Flags & FlagType.Getter) > 0)
-                        decl = TemplateUtils.ToDeclarationWithModifiersString(method, TemplateUtils.GetTemplate("Getter"));
+                        decl = TemplateUtils.ToDeclarationWithModifiersString(method, TemplateUtils.GetTemplate("Getter"), false);
                     else if ((method.Flags & FlagType.Setter) > 0)
-                        decl = TemplateUtils.ToDeclarationWithModifiersString(method, TemplateUtils.GetTemplate("Setter"));
+                        decl = TemplateUtils.ToDeclarationWithModifiersString(method, TemplateUtils.GetTemplate("Setter"), false);
                     else
-                        decl = TemplateUtils.ToDeclarationWithModifiersString(method, TemplateUtils.GetTemplate("Function"));
+                        decl = TemplateUtils.ToDeclarationWithModifiersString(method, TemplateUtils.GetTemplate("Function"), false);
                     decl = TemplateUtils.ReplaceTemplateVariable(decl, "Member", "_" + method.Name);
                     decl = TemplateUtils.ReplaceTemplateVariable(decl, "Void", features.voidKey);
                     decl = TemplateUtils.ReplaceTemplateVariable(decl, "Body", null);
@@ -3260,7 +3298,8 @@ namespace ASCompletion.Completion
             if ((member.Flags & FlagType.Constant) > 0)
             {
                 string template = TemplateUtils.GetTemplate("Constant");
-                result = TemplateUtils.ToDeclarationWithModifiersString(member, template);
+                result = TemplateUtils.ReplaceTemplateVariable(template, "Name", member.Name);
+                result = TemplateUtils.ToDeclarationWithModifiersString(member, result);
                 if (member.Value == null) 
                     result = TemplateUtils.ReplaceTemplateVariable(result, "Value", null);
                 else
@@ -3269,7 +3308,8 @@ namespace ASCompletion.Completion
             else
             {
                 string template = TemplateUtils.GetTemplate("Variable");
-                result = TemplateUtils.ToDeclarationWithModifiersString(member, template);
+                result = TemplateUtils.ReplaceTemplateVariable(template, "Name", member.Name);
+                result = TemplateUtils.ToDeclarationWithModifiersString(member, result);
             }
 
             if (firstVar) 
@@ -3428,10 +3468,10 @@ namespace ASCompletion.Completion
                 lookupPosition += delta;
                 string acc = GetPrivateAccessor(afterMethod);
                 string template = TemplateUtils.GetTemplate("EventHandler");
-                string decl = NewLine + TemplateUtils.ReplaceTemplateVariable(template, "Modifiers", acc);
-                decl = TemplateUtils.ReplaceTemplateVariable(decl, "Name", name);
+                string decl = NewLine + TemplateUtils.ReplaceTemplateVariable(template, "Name", name);
                 decl = TemplateUtils.ReplaceTemplateVariable(decl, "Type", type);
                 decl = TemplateUtils.ReplaceTemplateVariable(decl, "Void", ASContext.Context.Features.voidKey);
+                decl = TemplateUtils.ReplaceTemplateVariable(decl, "Modifiers", TemplateUtils.GetStaticExternOverrideModifiers(afterMethod, true));
 
                 string eventName = contextMatch.Groups["event"].Value;
                 string autoRemove = AddRemoveEvent(eventName);
@@ -3475,7 +3515,7 @@ namespace ASCompletion.Completion
             decl = TemplateUtils.ReplaceTemplateVariable(decl, "Type", FormatType(member.Type));
             decl = TemplateUtils.ReplaceTemplateVariable(decl, "Member", member.Name);
             decl = TemplateUtils.ReplaceTemplateVariable(decl, "BlankLine", NewLine);
-            InsertCode(position, decl);
+            InsertCode(position, decl, false);
         }
 
         static private void GenerateSetter(string name, MemberModel member, int position)
@@ -3488,7 +3528,7 @@ namespace ASCompletion.Completion
             decl = TemplateUtils.ReplaceTemplateVariable(decl, "Member", member.Name);
             decl = TemplateUtils.ReplaceTemplateVariable(decl, "Void", ASContext.Context.Features.voidKey ?? "void");
             decl = TemplateUtils.ReplaceTemplateVariable(decl, "BlankLine", NewLine);
-            InsertCode(position, decl);
+            InsertCode(position, decl, false);
         }
 
         static private void GenerateGetterSetter(string name, MemberModel member, int position)
@@ -3508,7 +3548,7 @@ namespace ASCompletion.Completion
             decl = TemplateUtils.ReplaceTemplateVariable(decl, "Member", member.Name);
             decl = TemplateUtils.ReplaceTemplateVariable(decl, "Void", ASContext.Context.Features.voidKey ?? "void");
             decl = TemplateUtils.ReplaceTemplateVariable(decl, "BlankLine", NewLine);
-            InsertCode(position, decl);
+            InsertCode(position, decl, false);
         }
 
         static private string GetPrivateAccessor(MemberModel member)
@@ -3689,11 +3729,8 @@ namespace ASCompletion.Completion
             FlagType ft = member.Flags;
             string modifiers = "";
 
-            modifiers += TemplateUtils.GetStaticExternOverride(member);
+            modifiers += TemplateUtils.GetStaticExternOverrideModifiers(member, addModifiers);
 
-            if (addModifiers)
-                modifiers += TemplateUtils.GetModifiers(member);
-            
             // signature
             if ((ft & FlagType.Getter) > 0)
                 return String.Format("{0}function get {1}", modifiers, member.ToDeclarationString());
@@ -3858,7 +3895,7 @@ namespace ASCompletion.Completion
             }
             else
             {
-                string type = FormatType(member.Type);
+                string type = GetShortType(FormatType(member.Type));
                 if (type == null) type = features.objectKey;
                 /*{
                     string message = String.Format(TextHelper.GetString("Info.TypeDeclMissing"), member.Name);
@@ -3890,7 +3927,7 @@ namespace ASCompletion.Completion
                 }
 
                 Sci.SetSel(startPos, position + member.Name.Length);
-                InsertCode(startPos, decl);
+                InsertCode(startPos, decl, false);
             }
             finally { Sci.EndUndoAction(); }
         }
@@ -3930,8 +3967,7 @@ namespace ASCompletion.Completion
                         MemberList inClassMembers = baseClassType.Members;
                         foreach (MemberModel inClassMember in inClassMembers)
                         {
-                            if ((inClassMember.Flags & FlagType.Function) > 0
-                               && m.Name.Equals(inClassMember.Name))
+                            if (m.Name.Equals(inClassMember.Name))
                             {
                                 mCopy.Flags |= FlagType.Override;
                                 overrideFound = true;
@@ -3951,8 +3987,8 @@ namespace ASCompletion.Completion
                     if ((m.Flags & FlagType.Setter) > 0)
                     {
                         methodTemplate += TemplateUtils.GetTemplate("Setter");
-                        methodTemplate = TemplateUtils.ReplaceTemplateVariable(methodTemplate, "Modifiers", 
-                            (TemplateUtils.GetStaticExternOverride(m) + TemplateUtils.GetModifiers(m)).Trim());
+                        methodTemplate = TemplateUtils.ReplaceTemplateVariable(methodTemplate, "Modifiers",
+                            TemplateUtils.GetStaticExternOverrideModifiers(mCopy, true));
                         methodTemplate = TemplateUtils.ReplaceTemplateVariable(methodTemplate, "Name", m.Name);
                         methodTemplate = TemplateUtils.ReplaceTemplateVariable(methodTemplate, "EntryPoint", "");
                         methodTemplate = TemplateUtils.ReplaceTemplateVariable(methodTemplate, "Type", m.Parameters[0].Type);
@@ -3963,7 +3999,7 @@ namespace ASCompletion.Completion
                     {
                         methodTemplate += TemplateUtils.GetTemplate("Getter");
                         methodTemplate = TemplateUtils.ReplaceTemplateVariable(methodTemplate, "Modifiers",
-                            (TemplateUtils.GetStaticExternOverride(m) + TemplateUtils.GetModifiers(m)).Trim());
+                            TemplateUtils.GetStaticExternOverrideModifiers(mCopy, true));
                         methodTemplate = TemplateUtils.ReplaceTemplateVariable(methodTemplate, "Name", m.Name);
                         methodTemplate = TemplateUtils.ReplaceTemplateVariable(methodTemplate, "EntryPoint", "");
                         methodTemplate = TemplateUtils.ReplaceTemplateVariable(methodTemplate, "Type", FormatType(m.Type));
@@ -4078,7 +4114,7 @@ namespace ASCompletion.Completion
                     Sci.SetSel(position, position);
                 }
 
-                InsertCode(position, result);
+                InsertCode(position, result, false);
             }
             finally { Sci.EndUndoAction(); }
         }
@@ -4287,46 +4323,30 @@ namespace ASCompletion.Completion
 
         public static void InsertCode(int position, string src)
         {
+            InsertCode(position, src, true);
+        }
+
+        public static void InsertCode(int position, string src, bool useSmartSnippets)
+        {
             ScintillaNet.ScintillaControl Sci = ASContext.CurSciControl;
             Sci.BeginUndoAction();
             try
             {
-                if (ASContext.CommonSettings.StartWithModifiers)
-                    src = FixModifiersLocation(src);
+                int len = SnippetManager.InsertSmartSnippetText(Sci, position, src, useSmartSnippets);
 
-                int len = SnippetHelper.InsertSnippetText(Sci, position, src);
+                // ensure that document is not scrolled to the right
+                // horizontally
+                int pos = Sci.CurrentPos;
+                int pos1 = Sci.PositionFromLine(Sci.LineFromPosition(pos));
+                Sci.CurrentPos = pos1;
+                Sci.ScrollCaret();
+                Sci.CurrentPos = pos;
+                Sci.ScrollCaret();
+
                 UpdateLookupPosition(position, len);
                 AddLookupPosition();
             }
             finally { Sci.EndUndoAction(); }
-        }
-
-        /// <summary>
-        /// Move "visibility" modifier at the beginning of the line
-        /// </summary>
-        private static string FixModifiersLocation(string src)
-        {
-            bool needUpdate = false;
-            string[] lines = src.Split('\n');
-            for (int i = 0; i < lines.Length; i++)
-            {
-                string line = lines[i];
-
-                Match m = reModifiers.Match(line);
-                if (m.Success)
-                {
-                    Group decl = m.Groups[2];
-                    Match m2 = reModifier.Match(decl.Value);
-                    if (m2.Success)
-                    {
-                        string repl = m2.Value + decl.Value.Remove(m2.Index, m2.Length);
-                        lines[i] = line.Remove(decl.Index, decl.Length).Insert(decl.Index, repl);
-                        needUpdate = true;
-                    }
-                }
-            }
-            if (needUpdate) return String.Join("\n", lines);
-            else return src;
         }
 
         private static void UpdateLookupPosition(int position, int delta)

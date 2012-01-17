@@ -1,1 +1,3 @@
-public function get $(EntryPoint)() { return ; }
+public function get $(var="name")():$(var="type") { 
+	return $(var="value"); 
+}

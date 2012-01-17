@@ -6,6 +6,33 @@
 	$(CBI)*/
 	public class $(EntryPoint) $(CSLB){
 		
+		
+		
+		// PUBLIC METHODS
+		
+		
+		
+		
+		// PRIVATE METHODS
+		
+		
+		
+		
+		// STATIC METHODS
+		
+		
+		
+		
+		// EVENT HANDLERS
+		
+		
+		
+		
+		// ACCESSORS
+		
+		
+		
+		
 	}
 	
 }

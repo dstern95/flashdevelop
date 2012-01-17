@@ -10,6 +10,31 @@ package $(Package) $(CSLB){
 			$(EntryPoint)
 		}
 		
+		// PUBLIC METHODS
+		
+		
+		
+		
+		// PRIVATE METHODS
+		
+		
+		
+		
+		// STATIC METHODS
+		
+		
+		
+		
+		// EVENT HANDLERS
+		
+		
+		
+		
+		// ACCESSORS
+		
+		
+		
+		
 	}
 	
 }

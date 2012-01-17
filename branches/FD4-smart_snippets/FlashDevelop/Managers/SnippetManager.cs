@@ -15,10 +15,11 @@ using PluginCore.Managers;
 using System.Collections;
 using ScintillaNet;
 using PluginCore;
+using PluginCore.PluginCore;
 
 namespace FlashDevelop.Managers
 {
-    class SnippetManager
+    public class SnippetManager
     {
         /// <summary>
         /// Gets a snippet from a file in the snippets directory
@@ -83,12 +84,25 @@ namespace FlashDevelop.Managers
                     startPos = sci.WordStartPosition(sci.CurrentPos, true);
                     sci.SetSel(startPos, endPos);
                 }
+                int p2 = sci.CurrentPos;
                 if (!String.IsNullOrEmpty(curWord))
                 {
                     // Remember the current word
                     ArgsProcessor.PrevSelWord = curWord;
+                    p2 -= curWord.Length;
                 }
-                SnippetHelper.InsertSnippetText(sci, sci.CurrentPos, snippet);
+
+                
+                sci.BeginUndoAction();
+                try
+                {
+                    InsertSmartSnippetText(sci, sci.CurrentPos, snippet, true);
+                }
+                finally
+                {
+                    sci.EndUndoAction();
+                }
+               
                 return true;
             }
             else if (canShowList)
@@ -131,6 +145,53 @@ namespace FlashDevelop.Managers
             return false;
         }
 
+        public static int InsertSmartSnippetText(ScintillaControl sci, int position, string snippet, bool useSmartSnippets)
+        {
+            String curWord = sci.GetWordFromPosition(position);
+            int p2 = sci.SelectionStart;
+
+            int len = SnippetHelper.InsertSnippetText(sci, position, snippet);
+            sci.CurrentPos = sci.SelectionStart;
+
+            SmartSnippetData snp = new SmartSnippetData();
+            snp.DesiredPos = sci.CurrentPos;
+
+            int pos = sci.CurrentPos;
+            sci.SetSel(p2, p2 + len);
+            string selText = sci.SelText;
+            string newText = ReplaceArgsWithSmartSnippets(snp, p2, sci.SelText);
+            sci.ReplaceSel(newText);
+
+            snp.PosStart = p2;
+            snp.PosEnd = p2 + newText.Length;
+
+            sci.SetSel(pos, pos);
+            sci.CurrentPos = pos;
+
+            if (useSmartSnippets)
+            {
+                if (snp.EntryPointsList.Count > 0)
+                {
+                    DispatchHighlightSmartSnippet(snp);
+                }
+            }
+            else
+            {
+                sci.CurrentPos = snp.DesiredPos;
+                sci.SetSel(snp.DesiredPos, snp.DesiredPos);
+            }
+
+            return len;
+        }
+
+        public static void DispatchHighlightSmartSnippet(SmartSnippetData smartSnippetData)
+        {
+            Hashtable info = new Hashtable();
+            info["snippet"] = smartSnippetData;
+            DataEvent de = new DataEvent(EventType.Command, "ASCompletion.HighlightSmartSnippet", info);
+            EventManager.DispatchEvent(Globals.MainForm, de);
+        }
+
         /// <summary>
         /// On completion list insert or cancel, reset the previous selection
         /// </summary>
@@ -139,6 +200,51 @@ namespace FlashDevelop.Managers
             CompletionList.OnInsert -= new InsertedTextHandler(HandleListInsert);
             CompletionList.OnCancel -= new InsertedTextHandler(HandleListInsert);
             ArgsProcessor.PrevSelText = String.Empty;
+        }
+
+        public static string ReplaceArgsWithSmartSnippets(SmartSnippetData snippet, int pos, string args)
+        {
+            Regex re = new Regex("\\$\\((var=\"(?<var>(?:[^\"\\\\]|\\\\.)*?)\")?(,id=\"(?<id>(?:[^\"\\\\]|\\\\.)*?)\")?(,list=\"(?<list>(?:[^\"\\\\]|\\\\.)*?)\")?\\)");
+            Match m = re.Match(args);
+            int shift;
+            while (m.Success)
+            {
+                shift = m.Value.Length - m.Groups["var"].Length;
+                if (snippet.DesiredPos > pos + m.Index)
+                    snippet.DesiredPos -= shift;
+
+                SmartSnippetItem p = new SmartSnippetItem(pos + m.Index, pos + m.Index + m.Groups["var"].Length, m.Groups["var"].Value);
+                if (m.Groups["list"].Success)
+                {
+                    string[] choices = m.Groups["list"].Value.Split(new char[] { ',' });
+                    p.CompletionList = new List<string>(choices);
+                }
+                if (m.Groups["id"].Success)
+                {
+                    p.ID = m.Groups["id"].Value;
+                }
+                else
+                {
+                    p.ID = m.Groups["var"].Value;
+                }
+                snippet.EntryPointsList.Add(p);
+
+                args = args.Substring(0, m.Index) + m.Groups["var"].Value.Replace("\\\"", "\"") + args.Substring(m.Index + m.Length);
+                m = re.Match(args);
+            }
+
+            List<string> unique = new List<string>();
+            for (int i = 0; i < snippet.EntryPointsList.Count; i++)
+            {
+                SmartSnippetItem d = snippet.EntryPointsList[i];
+                if (!unique.Contains(d.ID))
+                {
+                    unique.Add(d.ID);
+                    d.ForEdit = true;
+                }
+            }
+
+            return args;
         }
 
     }

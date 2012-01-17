@@ -69,6 +69,7 @@
   <ItemGroup>
     <Compile Include="Actions\ProjectWatcher.cs" />
     <Compile Include="Actions\TreeContextMenuUpdate.cs" />
+    <Compile Include="Ignores.cs" />
     <Compile Include="Managers\FSWatchers.cs" />
     <Compile Include="Managers\OverlayManager.cs" />
     <Compile Include="Managers\VCManager.cs" />
@@ -83,7 +84,6 @@
     <Compile Include="Sources\Git\Status.cs" />
     <Compile Include="Sources\Git\GitManager.cs" />
     <Compile Include="Sources\Git\TortoiseProc.cs" />
-    <Compile Include="Sources\Ignores.cs" />
     <Compile Include="Sources\Mercurial\BaseCommand.cs" />
     <Compile Include="Sources\Mercurial\DeleteCommand.cs" />
     <Compile Include="Sources\Mercurial\FileActions.cs" />
