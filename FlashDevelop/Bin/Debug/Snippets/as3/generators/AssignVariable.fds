@@ -1,1 +1,1 @@
-var <<$(Name)>><<:$(Type)>>$(EntryPoint) = 
+var <<$(Name)>><<:$(Type)>> = <<$(Value)>>$(EntryPoint)

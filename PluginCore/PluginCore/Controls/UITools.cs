@@ -11,12 +11,15 @@ using ScintillaNet;
 using PluginCore;
 using WeifenLuo.WinFormsUI;
 using WeifenLuo.WinFormsUI.Docking;
+using PluginCore.PluginCore;
 
 namespace PluginCore.Controls
 {
     
     public class UITools : IMessageFilter, IEventHandler
 	{
+        public delegate void PaintedHandler(ScintillaControl sender);
+        public delegate void KeyPressedHandler(ScintillaControl sender, HandleKeyEvent e);
         public delegate void CharAddedHandler(ScintillaControl sender, int value);
         public delegate void TextChangedHandler(ScintillaControl sender, int position, int length, int linesAdded);
         public delegate void MouseHoverHandler(ScintillaControl sender, int position);
@@ -61,6 +64,8 @@ namespace PluginCore.Controls
 		public event CharAddedHandler OnCharAdded;
         public event TextChangedHandler OnTextChanged;
         public event LineEventHandler OnMarkerChanged;
+        public event KeyPressedHandler OnKeyPressed;
+        public event PaintedHandler OnPainted;
 
         public bool DisableEvents;
 
@@ -164,6 +169,8 @@ namespace PluginCore.Controls
 			sci.UpdateUI += new UpdateUIHandler(OnUIRefresh);
 			sci.TextInserted += new TextInsertedHandler(OnTextInserted);
 			sci.TextDeleted += new TextDeletedHandler(OnTextDeleted);
+            sci.KeyPressed += new ScintillaNet.KeyPressedHandler(OnKeyPressedHandler);
+            sci.Painted += new ScintillaNet.PaintedHandler(OnPaintedHandler);
 		}
 
         /// <summary>
@@ -318,6 +325,17 @@ namespace PluginCore.Controls
             if (OnTextChanged != null && !DisableEvents) 
                 OnTextChanged(sci, position, -length, linesAdded);
 		}
+        private void OnKeyPressedHandler(ScintillaControl sci, HandleKeyEvent e)
+		{
+            if (OnKeyPressed != null && !DisableEvents)
+                OnKeyPressed(sci, e);
+		}
+        private void OnPaintedHandler(ScintillaControl sci)
+        {
+            if (OnPainted != null && !DisableEvents)
+                OnPainted(sci);
+        }
+        
 
         private void OnChar(ScintillaControl sci, int value)
 		{

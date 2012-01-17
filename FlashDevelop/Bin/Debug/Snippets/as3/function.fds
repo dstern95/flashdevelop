@@ -1,3 +1,3 @@
-function $(EntryPoint)():void $(CSLB){
-	
+$(var="private",list="private,protected,public") function $(var="function_name")($(var="")):$(var="void") $(CSLB){
+	$(EntryPoint)
 }

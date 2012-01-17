@@ -1,3 +1,4 @@
-for (var $(ItmUniqueVar):int = 0; $(ItmUniqueVar) < $(EntryPoint); $(ItmUniqueVar)++) $(CSLB){
-	
+for (var $(var="$(ItmUniqueVar)"):int = 0; $(var="$(ItmUniqueVar)") < $(var="$(TypClosestListName)",id="array").length; $(var="$(ItmUniqueVar)")++) $(CSLB){
+	var $(var="item"):$(var="$(TypClosestListItemType)",id="itemtype") = $(var="$(TypClosestListName)",id="array")[$(var="$(ItmUniqueVar)")];
+	$(EntryPoint)
 }

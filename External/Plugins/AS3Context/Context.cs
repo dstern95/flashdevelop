@@ -634,6 +634,10 @@ namespace AS3Context
                 int start = MBSafeColumn(sci, line, int.Parse(m.Groups["col"].Value) - 1);
                 if (line == sci.LineCount && start == 0 && line > 0) start = -1;
                 AddSquiggles(sci, line, start, start + 1);
+
+                Hashtable data = new Hashtable();
+                DataEvent de = new DataEvent(EventType.Command, "AS3Context.SyntaxError", data);
+                EventManager.DispatchEvent(sci, de);
             }
             catch { }
         }

@@ -20,6 +20,7 @@ using PluginCore.Localization;
 using System.Text.RegularExpressions;
 using PluginCore.Helpers;
 using ASCompletion.Helpers;
+using PluginCore.PluginCore;
 
 namespace ASCompletion
 {
@@ -60,6 +61,12 @@ namespace ASCompletion
         private Regex reVirtualFile = new Regex("\\.(swf|swc)::", RegexOptions.Compiled);
         private Regex reArgs = new Regex("\\$\\((Typ|Mbr|Itm)", RegexOptions.Compiled);
         private Regex reCostlyArgs = new Regex("\\$\\((TypClosest|ItmUnique)", RegexOptions.Compiled);
+
+        private DamageTimer SmartSnippedDamageTimer;
+        private bool IsUpdateCurrentSnippet = false;
+        private SmartSnippetData SnippetData;
+        private delegate void InitSmartSnippetsDelegate(ScintillaNet.ScintillaControl sci, SmartSnippetData SmartSnippetData);
+        private delegate void HighlightSmartSnippetsDelegate(ScintillaNet.ScintillaControl sci, SmartSnippetData SmartSnippetData);
 
         #region Required Properties
 
@@ -183,6 +190,13 @@ namespace ASCompletion
                         if (!doc.IsEditable) return;
                         timerPosition.Enabled = false;
                         timerPosition.Enabled = true;
+
+                        if (SnippetData != null)
+                        {
+                            HighlightSmartSnippets(sci, SnippetData);
+                            //(PluginBase.MainForm as Form).BeginInvoke(
+                            //    new HighlightSmartSnippetsDelegate(HighlightSmartSnippets), new object[] { sci, SnippetData });
+                        }
                         return;
 
                     // key combinations
@@ -265,6 +279,13 @@ namespace ASCompletion
                                     ASContext.SetLanguageClassPath(setup);
                                 }
                                 e.Handled = true;
+                            }
+
+                            else if (command == "ASCompletion.HighlightSmartSnippet")
+                            {
+                                Hashtable info = de.Data as Hashtable;
+                                SmartSnippetData SmartSnippetDatarRef = (SmartSnippetData)info["snippet"];
+                                CreateSmartSnippet(sci, SmartSnippetDatarRef);
                             }
 
                             // send a UserClasspath
@@ -399,6 +420,10 @@ namespace ASCompletion
                                 if (found != null) e.Handled = true;
                             }
                         }
+                        else if (command == "AS3Context.SyntaxError")
+                        {
+                            HighlightSmartSnippets(sci, SnippetData);
+                        }
                         break;
                 }
 
@@ -510,6 +535,90 @@ namespace ASCompletion
                 ErrorManager.ShowError(ex);
             }
 		}
+
+        private void CreateSmartSnippet(ScintillaNet.ScintillaControl sci, SmartSnippetData SmartSnippetDatarRef)
+        {
+            (PluginBase.MainForm as Form).BeginInvoke(new InitSmartSnippetsDelegate(InitSmartSnippets), new object[] { sci, SmartSnippetDatarRef});
+        }
+
+        private void InitSmartSnippets(ScintillaNet.ScintillaControl sci, SmartSnippetData SmartSnippetData)
+        {
+            this.SnippetData = SmartSnippetData;
+            SmartSnippetsUtils.ShiftToNextSmartSnippet(sci, SmartSnippetData, true);
+
+            sci.UndoPerformed += new ScintillaNet.UndoPerformedHandler(sci_UndoPerformed);
+            sci.Leave += new EventHandler(sci_Leave);
+        }
+
+        private void HighlightSmartSnippets(ScintillaNet.ScintillaControl sci, SmartSnippetData SmartSnippetData)
+        {
+            if (SmartSnippetData == null)
+                return;
+            SmartSnippetsUtils.HighlightSmartSnippets(sci, SmartSnippetData);
+        }
+
+        private void sci_Leave(object sender, EventArgs e)
+        {
+            StopSmartSnippetInput((ScintillaNet.ScintillaControl)sender);
+        }
+
+        private bool HandleKeyPress(ScintillaNet.ScintillaControl sci, int value)
+        {
+            if (!sci.IsFocus)
+                return false;
+
+            if (SnippetData == null)
+                return false;
+
+            if (value == (int)Keys.Tab)
+            {
+                SmartSnippetsUtils.RemoveHighlightSmartSnippets(sci);
+                SmartSnippetsUtils.ShiftToNextSmartSnippet(sci, SnippetData, false);
+                return true;
+            }
+            else if (value == (int)Keys.Enter)
+            {
+                if (!CompletionList.Active)
+                {
+                    bool outOfSnippet = true;
+                    for (int i = 0; i < SnippetData.EntryPointsList.Count; i++)
+                    {
+                        SmartSnippetItem p = SnippetData.EntryPointsList[i];
+                        if (p.Start <= sci.CurrentPos && p.End >= sci.CurrentPos)
+                            outOfSnippet = false;
+                    }
+                    if (!outOfSnippet)
+                    {
+                        sci.CurrentPos = SnippetData.DesiredPos;
+                        sci.SetSel(sci.CurrentPos, sci.CurrentPos);
+                    }
+                    StopSmartSnippetInput(sci);
+                    if (!outOfSnippet)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            else if (value == (int)Keys.Escape)
+            {
+                if (!CompletionList.Active)
+                {
+                    StopSmartSnippetInput(sci);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void StopSmartSnippetInput(ScintillaNet.ScintillaControl sci)
+        {
+            ClearSmartSnippetDamageTimer();
+            sci.Leave -= new EventHandler(sci_Leave);
+            sci.UndoPerformed -= new ScintillaNet.UndoPerformedHandler(sci_UndoPerformed);
+            SmartSnippetsUtils.RemoveHighlightSmartSnippets(sci);
+            SnippetData = null;
+            IsUpdateCurrentSnippet = false;
+        }
 
 		#endregion
 
@@ -686,6 +795,8 @@ namespace ASCompletion
         private void AddEventHandlers()
         {
             // scintilla controls listeners
+            UITools.Manager.OnPainted += new UITools.PaintedHandler(OnPainted);
+            UITools.Manager.OnKeyPressed += new UITools.KeyPressedHandler(OnKeyPressed);
             UITools.Manager.OnCharAdded += new UITools.CharAddedHandler(OnChar);
             UITools.Manager.OnMouseHover += new UITools.MouseHoverHandler(OnMouseHover);
             UITools.Manager.OnTextChanged += new UITools.TextChangedHandler(OnTextChanged);
@@ -814,6 +925,11 @@ namespace ASCompletion
 
         #region Event handlers
 
+        private void OnKeyPressed(ScintillaNet.ScintillaControl sender, HandleKeyEvent e)
+        {
+            e.Handled = HandleKeyPress(sender, e.Key);
+        }
+
         /// <summary>
 		/// Display completion list or calltip info
 		/// </summary>
@@ -849,6 +965,73 @@ namespace ASCompletion
         {
             ASComplete.OnTextChanged(sender, position, length, linesAdded);
             ASContext.OnTextChanged(sender, position, length, linesAdded);
+
+            SmartSnippetTextChanged(sender, position, length, linesAdded);
+        }
+
+        private void SmartSnippetTextChanged(ScintillaNet.ScintillaControl sci, int position, int length, int linesAdded)
+        {
+            if (SnippetData == null)
+                return;
+
+            ClearSmartSnippetDamageTimer();
+            StartSmartSnippetDamageTimer(sci, position, length, linesAdded);
+
+            // flag in required to update other entry points on Paint event
+            IsUpdateCurrentSnippet = true;
+            SmartSnippetsUtils.UpdateSmartSnippetsPositions(sci, position, length, SnippetData);
+        }
+
+        private void StartSmartSnippetDamageTimer(ScintillaNet.ScintillaControl sci, int pos, int len, int lines)
+        {
+            ClearSmartSnippetDamageTimer();
+            SmartSnippedDamageTimer = new DamageTimer(sci, pos, len, lines);
+            SmartSnippedDamageTimer.Interval = 150;
+            SmartSnippedDamageTimer.Tick += new EventHandler(SmartSnippedDamageTimer_Tick);
+            SmartSnippedDamageTimer.Start();
+        }
+
+        private void ClearSmartSnippetDamageTimer()
+        {
+            if (SmartSnippedDamageTimer != null)
+            {
+                SmartSnippedDamageTimer.Stop();
+                SmartSnippedDamageTimer.Tick -= new EventHandler(SmartSnippedDamageTimer_Tick);
+                SmartSnippedDamageTimer = null;
+            }
+        }
+
+        private void SmartSnippedDamageTimer_Tick(object sender, EventArgs e)
+        {
+            ScintillaNet.ScintillaControl sci = SmartSnippedDamageTimer.Sci;
+
+            //check if at least one entry point was deleted by user
+            bool damaged = SmartSnippetsUtils.CheckSmartSnippetsDamaged(SmartSnippedDamageTimer.Sci, SmartSnippedDamageTimer.Position,
+                SmartSnippedDamageTimer.Length, SmartSnippedDamageTimer.LinesAdded, SnippetData);
+            
+            ClearSmartSnippetDamageTimer();
+
+            if (damaged)
+            {
+                StopSmartSnippetInput(sci);
+            }
+        }
+
+        private void sci_UndoPerformed(ScintillaNet.ScintillaControl sender)
+        {
+            StopSmartSnippetInput((ScintillaNet.ScintillaControl)sender);
+        }
+
+        private void OnPainted(ScintillaNet.ScintillaControl sci)
+        {
+            if (!IsUpdateCurrentSnippet)
+                return;
+
+            if (SnippetData == null)
+                return;
+
+            SmartSnippetsUtils.UpdateSmartSnippetsValues(sci, SnippetData);
+            IsUpdateCurrentSnippet = false;
         }
 
 		private void OnUpdateCallTip(ScintillaNet.ScintillaControl sci, int position)
@@ -894,6 +1077,22 @@ namespace ASCompletion
             SetItemsEnabled(enableItems, ASContext.Context.CanBuild);
         }
         #endregion
+    }
+
+    class DamageTimer : Timer
+    {
+        public ScintillaNet.ScintillaControl Sci;
+        public int Position;
+        public int Length;
+        public int LinesAdded;
+
+        public DamageTimer(ScintillaNet.ScintillaControl sci, int pos, int len, int lines)
+        {
+            this.Sci = sci;
+            this.Position = pos;
+            this.Length = len;
+            this.LinesAdded = lines;
+        }
     }
 
 }

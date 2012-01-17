@@ -122,7 +122,8 @@ namespace CodeRefactor.Controls
                     separatorInserted = qname;
                     items.Add("--- " + qname);
                 }
-                label = TemplateUtils.ToDeclarationString(member, TemplateUtils.GetTemplate("MethodDeclaration"));
+                label = TemplateUtils.ToDeclarationString(member, 
+                    TemplateUtils.GetTemplate("MethodDeclaration"), false);
                 label = label.Replace(SnippetHelper.BOUNDARY, "")
                     .Replace(SnippetHelper.ENTRYPOINT, "")
                     .Replace(SnippetHelper.EXITPOINT, "");
@@ -134,7 +135,7 @@ namespace CodeRefactor.Controls
                 {
                     label = "set " + label;
                 }
-                
+
                 items.Add(label, false);
                 members2.Add(label, member);
             }

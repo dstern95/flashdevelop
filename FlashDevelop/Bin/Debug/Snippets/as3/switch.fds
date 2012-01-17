@@ -1,8 +1,12 @@
-switch ($(EntryPoint)) $(CSLB){
+switch ($(var="object")) $(CSLB){
+	case $(var="condition"):
+		$(EntryPoint)	
+		break;
 	case :
 		
-	break;
+		break;
 	default:
+		
 }
 
 

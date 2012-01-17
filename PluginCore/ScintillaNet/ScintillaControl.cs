@@ -71,6 +71,11 @@ namespace ScintillaNet
             {
                 case WM_KEYDOWN:
                 {
+                    PluginCore.PluginCore.HandleKeyEvent e = new PluginCore.PluginCore.HandleKeyEvent();
+                    e.Key = (Int32)m.WParam;
+                    KeyPressed(this, e);
+                    if (e.Handled) return true;
+
                     if (!IsFocus || ignoreAllKeys || ignoredKeys.ContainsKey((Int32)Control.ModifierKeys + (Int32)m.WParam))
                     {
                         if (base.PreProcessMessage(ref m)) return true;
@@ -84,6 +89,7 @@ namespace ScintillaNet
                             return base.PreProcessMessage(ref m);
                         }
                     }
+                    
                     break;
                 }
                 case WM_SYSKEYDOWN:
@@ -141,6 +147,7 @@ namespace ScintillaNet
         public event IndicatorReleaseHandler IndicatorRelease;
         public event AutoCCancelledHandler AutoCCancelled;
         public event AutoCCharDeletedHandler AutoCCharDeleted;
+        public event KeyPressedHandler KeyPressed;
 		
 		#endregion
 

@@ -1,7 +1,7 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{61885F70-B4DC-4B44-852D-5D6D03F2A734}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -288,6 +288,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="PluginCore\Controls\WinFormUtils.cs" />
+    <Compile Include="PluginCore\HandleKeyEvent.cs" />
     <Compile Include="PluginCore\Helpers\ConfigHelper.cs" />
     <Compile Include="PluginCore\Helpers\JvmConfigHelper.cs" />
     <Compile Include="PluginCore\Helpers\ProcessHelper.cs" />
@@ -303,6 +304,7 @@
     <Compile Include="PluginCore\Bridge\BridgeClient.cs" />
     <Compile Include="PluginCore\Bridge\ServerSocket.cs" />
     <Compile Include="PluginCore\Bridge\WatcherEx.cs" />
+    <Compile Include="PluginCore\SmartSnippetData.cs" />
     <Compile Include="PluginCore\Utilities\CryptoClasses.cs" />
     <Compile Include="PluginCore\Utilities\ImageKonverter.cs" />
     <Compile Include="PluginCore\Utilities\LogicalComparer.cs" />
@@ -478,7 +480,9 @@
     <EmbeddedResource Include="PluginCore\Resources\en_US.resX">
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="PluginCore\Resources\eu_EU.resX" />
+    <EmbeddedResource Include="PluginCore\Resources\eu_EU.resX">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="PluginCore\Resources\ja_JP.resX">
       <SubType>Designer</SubType>
     </EmbeddedResource>
