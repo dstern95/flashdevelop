@@ -36,6 +36,21 @@ namespace ASCompletion.Completion
             return modifiers;
         }
 
+        public static string GetStaticExternModifiers(MemberModel m, bool addModifiers)
+        {
+            return GetStaticExternModifiers(m, addModifiers, true);
+        }
+
+        public static string GetStaticExternModifiers(MemberModel m, bool addModifiers, bool useSmartSnippets)
+        {
+            string methodModifiers = "";
+            if (ASContext.CommonSettings.StartWithModifiers)
+                methodModifiers = ((addModifiers ? GetModifiers(m, useSmartSnippets) + " " : "") + GetStaticExtern(m)).Trim();
+            else
+                methodModifiers = (GetStaticExtern(m) + (addModifiers ? GetModifiers(m, useSmartSnippets) : "")).Trim();
+            return methodModifiers;
+        }
+
         public static string GetStaticExternOverrideModifiers(MemberModel m, bool addModifiers)
         {
             return GetStaticExternOverrideModifiers(m, addModifiers, true);
