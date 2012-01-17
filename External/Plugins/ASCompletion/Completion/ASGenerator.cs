@@ -3466,12 +3466,15 @@ namespace ASCompletion.Completion
                         Sci.SetSel(position, position);
                     }
                 lookupPosition += delta;
+                FlagType ft = contextResolved.Context.ContextFunction.Flags;
+                ft &= ~FlagType.Override;
+                MemberModel mbr = new MemberModel("", "", ft, GetDefaultVisibility());
                 string acc = GetPrivateAccessor(afterMethod);
                 string template = TemplateUtils.GetTemplate("EventHandler");
                 string decl = NewLine + TemplateUtils.ReplaceTemplateVariable(template, "Name", name);
                 decl = TemplateUtils.ReplaceTemplateVariable(decl, "Type", type);
                 decl = TemplateUtils.ReplaceTemplateVariable(decl, "Void", ASContext.Context.Features.voidKey);
-                decl = TemplateUtils.ReplaceTemplateVariable(decl, "Modifiers", TemplateUtils.GetStaticExternOverrideModifiers(afterMethod, true));
+                decl = TemplateUtils.ReplaceTemplateVariable(decl, "Modifiers", TemplateUtils.GetStaticExternOverrideModifiers(mbr, true));
 
                 string eventName = contextMatch.Groups["event"].Value;
                 string autoRemove = AddRemoveEvent(eventName);
