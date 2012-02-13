@@ -3,6 +3,10 @@ using System;
 using flash.tools.debugger;
 using flash.tools.debugger.expression;
 using flash.tools.debugger.concrete;
+using ASCompletion.Model;
+using ASCompletion.Completion;
+using ASCompletion.Context;
+using System.Collections.Generic;
 
 namespace FlashDebugger
 {
@@ -76,9 +80,30 @@ namespace FlashDebugger
                 {
                     if (v.getName().Equals(par0)) return (java.lang.Object)v;
                 }
+                var fullClassName = findClassName((java.lang.String)par0);
+                if (null != fullClassName)
+                {
+                    return (java.lang.Object)session.getGlobal(new java.lang.String(fullClassName));
+                }
             }
             throw new NoSuchVariableException(par0);
             //Value_.UNDEFINED;
+        }
+
+        public string findClassName(java.lang.String className)
+        {
+            string endOfClassName = "." + className;
+            
+            MemberList imports = ASContext.Context.GetVisibleExternalElements(true);
+            foreach (MemberModel member in imports)
+            {
+                if (member.Name == className || member.Name.EndsWith(endOfClassName))
+                {
+                    var lastPos = member.Type.LastIndexOf('.');
+                    return lastPos > 0 ? member.Type.Substring(0, lastPos) + "::" + className : member.Type;
+                }
+            }
+            return null;
         }
 
         public java.lang.Object lookupMembers(java.lang.Object par0)
