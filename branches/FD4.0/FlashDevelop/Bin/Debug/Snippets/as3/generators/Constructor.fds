@@ -1,3 +1,0 @@
-$(Modifiers) function $(Name)($(Arguments)) $(CSLB){
-	super($(EntryPoint));
-}

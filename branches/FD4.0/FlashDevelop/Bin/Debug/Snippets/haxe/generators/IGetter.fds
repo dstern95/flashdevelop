@@ -1,1 +1,0 @@
-$(BlankLine)var $(Name)(get_$(Name), null):$(Type);$(EntryPoint)

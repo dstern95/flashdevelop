@@ -1,3 +1,0 @@
-$(Modifiers) function get $(Name)():$(Type) $(CSLB){
-	return $(Member)$(EntryPoint);
-}

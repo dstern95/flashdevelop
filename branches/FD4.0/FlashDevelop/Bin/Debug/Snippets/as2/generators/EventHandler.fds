@@ -1,3 +1,0 @@
-$(Modifiers) function $(Name)(e:$(Type)):$(Void) $(CSLB){
-	$(EntryPoint)
-}

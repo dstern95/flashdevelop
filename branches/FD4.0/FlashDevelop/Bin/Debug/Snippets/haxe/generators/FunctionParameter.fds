@@ -1,1 +1,0 @@
-$(PName)<<:$(PType)>><< = $(PDefaultValue)>><<$(PComma) >>

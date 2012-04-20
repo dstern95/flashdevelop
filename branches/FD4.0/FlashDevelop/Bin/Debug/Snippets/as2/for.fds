@@ -1,3 +1,0 @@
-for (var $(ItmUniqueVar):Number = 0; $(ItmUniqueVar) < $(EntryPoint); $(ItmUniqueVar)++) $(CSLB){
-	
-}

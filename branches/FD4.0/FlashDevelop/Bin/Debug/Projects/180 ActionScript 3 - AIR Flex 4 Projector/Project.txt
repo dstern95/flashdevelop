@@ -1,1 +1,0 @@
-An AIR projector that uses MXML and the Flex 4 Framework
