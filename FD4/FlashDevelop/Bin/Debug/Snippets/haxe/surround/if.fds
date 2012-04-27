@@ -1,3 +1,0 @@
-if ($(EntryPoint)) $(CSLB){
-	{0}
-}
