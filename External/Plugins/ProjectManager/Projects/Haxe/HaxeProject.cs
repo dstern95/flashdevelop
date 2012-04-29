@@ -383,6 +383,7 @@ namespace ProjectManager.Projects.Haxe
             string output = "";
             foreach(string line in raw)
             {
+                if (line == null) break;
                 Match m = reHxOp.Match(line);
                 if (m.Success)
                 {
