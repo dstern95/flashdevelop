@@ -416,6 +416,7 @@ namespace ProjectManager.Projects.Haxe
             CompilerOptions.Directives = defs.ToArray();
             CompilerOptions.Libraries = libs.ToArray();
             CompilerOptions.Additional = add.ToArray();
+            if (cps.Count == 0) cps.Add(".");
             Classpaths.Clear();
             Classpaths.AddRange(cps);
 
