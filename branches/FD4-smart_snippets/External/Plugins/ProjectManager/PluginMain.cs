@@ -171,6 +171,16 @@ namespace ProjectManager
                 pluginUI.IsTraceDisabled = !isDebug;
                 if (project != null) project.TraceEnabled = isDebug;
             };
+            menus.TargetBuildSelector.SelectedIndexChanged += delegate
+            {
+                if (project != null && project.MovieOptions.TargetBuildTypes != null
+                    && project.TargetBuild != menus.TargetBuildSelector.Text)
+                {
+                    FlexCompilerShell.Cleanup();
+                    project.TargetBuild = menus.TargetBuildSelector.Text;
+                    projectActions.UpdateASCompletion(MainForm, project);
+                }
+            };
             
             menus.ProjectMenu.NewProject.Click += delegate { NewProject(); };
             menus.ProjectMenu.OpenProject.Click += delegate { OpenProject(); };
@@ -502,11 +512,6 @@ namespace ProjectManager
 
             // ui
             pluginUI.SetProject(project);
-            menus.RecentProjects.AddOpenedProject(project.ProjectPath);
-            menus.ConfigurationSelector.Enabled = true;
-            menus.ProjectMenu.ProjectItemsEnabled = true;
-            menus.TestMovie.Enabled = true;
-            menus.BuildProject.Enabled = true;
 
             // notify
             PluginBase.CurrentSolution = project;
@@ -516,6 +521,7 @@ namespace ProjectManager
 
             projectActions.UpdateASCompletion(MainForm, project);
             pluginUI.NotifyIssues();
+            menus.SetProject(project);
             project.ClasspathChanged += new ChangedHandler(ProjectClasspathsChanged);
             project.BeforeSave += new BeforeSaveHandler(ProjectBeforeSave);
             listenToPathChange = true;
@@ -546,7 +552,8 @@ namespace ProjectManager
             // save project prefs
             ProjectPreferences prefs = Settings.GetPrefs(project);
             prefs.ExpandedPaths = Tree.ExpandedPaths;
-            prefs.DebugMode = !pluginUI.IsTraceDisabled;
+            prefs.DebugMode = project.TraceEnabled;
+            prefs.TargetBuild = project.TargetBuild;
             
             if (!PluginBase.MainForm.ClosingEntirely) SaveProjectSession();
 
@@ -562,11 +569,8 @@ namespace ProjectManager
             {
                 pluginUI.SetProject(null);
                 Settings.LastProject = "";
-                menus.ProjectMenu.ProjectItemsEnabled = false;
-                menus.TestMovie.Enabled = false;
-                menus.BuildProject.Enabled = false;
-                menus.ConfigurationSelector.Enabled = false;
-
+                menus.DisabledForBuild = true;
+                
                 PluginBase.CurrentSolution = null;
                 PluginBase.CurrentProject = null;
                 PluginBase.MainForm.RefreshUI();
@@ -616,11 +620,12 @@ namespace ProjectManager
                 if (dialog.PropertiesChanged)
                 {
                     project.PropertiesChanged();
+                    project.UpdateVars();
                     BroadcastProjectInfo();
                     project.Save();
+                    menus.ProjectChanged(project);
                 }
-                else if (dialog.ClasspathsChanged)
-                    projectActions.UpdateASCompletion(MainForm, project);
+                else projectActions.UpdateASCompletion(MainForm, project);
             }
         }
 
@@ -723,15 +728,15 @@ namespace ProjectManager
             }
             else if (project.TestMovieBehavior == TestMovieBehavior.Custom)
             {
+                if (project.TraceEnabled && project.EnableInteractiveDebugger)
+                {
+                    de = new DataEvent(EventType.Command, "AS3Context.StartProfiler", null);
+                    EventManager.DispatchEvent(this, de);
+                    de = new DataEvent(EventType.Command, "AS3Context.StartDebugger", null);
+                    EventManager.DispatchEvent(this, de);
+                }
                 if (project.TestMovieCommand != null && project.TestMovieCommand.Length > 0)
                 {
-                    if (project.TraceEnabled && project.EnableInteractiveDebugger)
-                    {
-                        de = new DataEvent(EventType.Command, "AS3Context.StartProfiler", null);
-                        EventManager.DispatchEvent(this, de);
-                        de = new DataEvent(EventType.Command, "AS3Context.StartDebugger", null);
-                        EventManager.DispatchEvent(this, de);
-                    }
                     string cmd = MainForm.ProcessArgString(project.TestMovieCommand).Trim();
                     cmd = project.FixDebugReleasePath(cmd);
 
@@ -750,6 +755,13 @@ namespace ProjectManager
                     psi.UseShellExecute = true;
                     psi.WorkingDirectory = project.Directory;
                     ProcessHelper.StartAsync(psi);
+                }
+                else
+                {
+                    // let plugins handle the command
+                    de = new DataEvent(EventType.Command, ProjectManagerEvents.RunCustomCommand, "");
+                    EventManager.DispatchEvent(this, de);
+                    if (de.Handled) return;
                 }
             }
             else
@@ -799,7 +811,6 @@ namespace ProjectManager
         {
             if (!listenToPathChange) return;
             listenToPathChange = false;
-            project.UpdateVars();
             projectActions.UpdateASCompletion(MainForm, project);
             pluginUI.NotifyIssues();
             FlexCompilerShell.Cleanup(); // clear compile cache for this project

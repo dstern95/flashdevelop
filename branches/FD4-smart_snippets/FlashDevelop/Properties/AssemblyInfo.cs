@@ -10,8 +10,8 @@ using System.Resources;
 //
 [assembly: AssemblyTitle("FlashDevelop 4")]
 [assembly: AssemblyDescription("FlashDevelop is an open source script editor.")]
-[assembly: AssemblyProduct("FlashDevelop 4.0.1 RTM for Microsoft.NET 2.0 (R2205)")]
-[assembly: AssemblyCopyright("FlashDevelop.org 2005-2011")]
+[assembly: AssemblyProduct("FlashDevelop 4.1.0 RTM for Microsoft.NET 2.0 (R2263)")]
+[assembly: AssemblyCopyright("FlashDevelop.org 2005-2012")]
 [assembly: AssemblyCompany("FlashDevelop.org")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyTrademark("")]

@@ -797,7 +797,7 @@ namespace ASCompletion.Context
         /// </summary>
         /// <param name="fileName">Full path</param>
         /// <returns>File model</returns>
-        public FileModel GetCachedFileModel(string fileName)
+        public virtual FileModel GetCachedFileModel(string fileName)
         {
             if (fileName == null || fileName.Length == 0 || !File.Exists(fileName)) 
                 return new FileModel(fileName);
@@ -815,15 +815,6 @@ namespace ASCompletion.Context
                     return nFile;
                 }
             }
-            /*if (PathModel.Orphans.HasFile(fileName))
-            {
-                nFile = PathModel.Orphans.GetFile(fileName);
-                if (nFile.Context == this)
-                {
-                    PathModel.Orphans.RemoveFile(fileName);
-                    return nFile;
-                }
-            }*/
 
             // parse and add to cache
             nFile = ASFileParser.ParseFile(fileName, this);
@@ -838,7 +829,6 @@ namespace ASCompletion.Context
             }
 
             // not owned
-            //PathModel.Orphans.AddFile(nFile);
             return nFile;
         }
 
@@ -945,6 +935,8 @@ namespace ASCompletion.Context
             parser.Features.hasVars = ASContext.Context.Features.hasVars;
             parser.Features.hasMethods = ASContext.Context.Features.hasMethods;
             parser.Features.hasGenerics = ASContext.Context.Features.hasGenerics;
+            parser.Features.hasCArrays = ASContext.Context.Features.hasCArrays;
+            parser.Features.CArrayTemplate = ASContext.Context.Features.CArrayTemplate;
             return parser;
         }
 

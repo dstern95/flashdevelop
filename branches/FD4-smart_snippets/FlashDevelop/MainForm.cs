@@ -484,6 +484,14 @@ namespace FlashDevelop
             get { return Application.ProductName; }
         }
 
+        /// <summary>
+        /// Gets the version of the operating system
+        /// </summary>
+        public Version OSVersion
+        {
+            get { return Environment.OSVersion.Version; }
+        }
+
         #endregion
 
         #region Component Creation
@@ -1249,7 +1257,8 @@ namespace FlashDevelop
                 Int32 column = sci.Column(sci.CurrentPos) + 1;
                 Int32 line = sci.LineFromPosition(sci.CurrentPos) + 1;
                 String statusText = " " + TextHelper.GetString("Info.StatusText");
-                String file = PathHelper.GetCompactPath(sci.FileName);
+                var oldOS = this.OSVersion.Major < 6; // Vista is 6.0 and ok...
+                String file = oldOS ? PathHelper.GetCompactPath(sci.FileName) : sci.FileName;
                 String eol = (sci.EOLMode == 0) ? "CR+LF" : ((sci.EOLMode == 1) ? "CR" : "LF");
                 String encoding = ButtonManager.GetActiveEncodingName();
                 this.toolStripStatusLabel.Text = String.Format(statusText, line, column, eol, encoding, file);
@@ -1786,6 +1795,8 @@ namespace FlashDevelop
                 Encoding encoding = Encoding.GetEncoding((Int32)this.appSettings.DefaultCodePage);
                 String fileName = DocumentManager.GetNewDocumentName(args[0]);
                 String contents = FileHelper.ReadFile(args[1], encoding);
+                String lineEndChar = LineEndDetector.GetNewLineMarker((int)Settings.EOLMode);
+                contents = Regex.Replace(contents, @"\r\n?|\n", lineEndChar);
                 String processed = this.ProcessArgString(contents);
                 ActionPoint actionPoint = SnippetHelper.ProcessActionPoint(processed);
                 if (this.Documents.Length == 1 && this.Documents[0].IsUntitled)
@@ -1818,6 +1829,8 @@ namespace FlashDevelop
                 Encoding encoding = Encoding.GetEncoding((Int32)this.appSettings.DefaultCodePage);
                 String contents = FileHelper.ReadFile(templatePath);
                 String processed = this.ProcessArgString(contents);
+                String lineEndChar = LineEndDetector.GetNewLineMarker((int)Settings.EOLMode);
+                processed = Regex.Replace(processed, @"\r\n?|\n", lineEndChar);
                 ActionPoint actionPoint = SnippetHelper.ProcessActionPoint(processed);
                 FileHelper.WriteFile(newFilePath, actionPoint.Text, encoding, Globals.Settings.SaveUnicodeWithBOM);
                 if (actionPoint.EntryPosition != -1)
@@ -2313,7 +2326,8 @@ namespace FlashDevelop
         public void FindNext(Object sender, System.EventArgs e)
         {
             Boolean update = !Globals.Settings.DisableFindTextUpdating;
-            this.frInDocDialog.FindNext(true, update, !this.quickFind.Visible);
+            Boolean simple = !Globals.Settings.DisableSimpleQuickFind && !this.quickFind.Visible;
+            this.frInDocDialog.FindNext(true, update, simple);
         }
 
         /// <summary>
@@ -2322,7 +2336,8 @@ namespace FlashDevelop
         public void FindPrevious(Object sender, System.EventArgs e)
         {
             Boolean update = !Globals.Settings.DisableFindTextUpdating;
-            this.frInDocDialog.FindNext(false, update, !this.quickFind.Visible);
+            Boolean simple = !Globals.Settings.DisableSimpleQuickFind && !this.quickFind.Visible;
+            this.frInDocDialog.FindNext(false, update, simple);
         }
 
         /// <summary>

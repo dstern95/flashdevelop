@@ -27,6 +27,7 @@ namespace ProjectManager.Projects.AS3
         }
 
         public override string Language { get { return "as3"; } }
+        public override bool ReadOnly { get { return FileInspector.IsFlexBuilderProject(ProjectPath); } }
         public override bool HasLibraries { get { return OutputType == OutputType.Application || OutputType == OutputType.Library; } }
         public override int MaxTargetsCount { get { return 1; } }
         public override string DefaultSearchFilter { get { return "*.as;*.mxml"; } }
@@ -219,8 +220,7 @@ namespace ProjectManager.Projects.AS3
 
         public override void Save()
         {
-            if (FileInspector.IsFlexBuilderProject(ProjectPath))
-                return;
+            if (ReadOnly) return;
             RebuildCompilerOptions();
             SaveAs(ProjectPath);
         }
@@ -268,7 +268,7 @@ namespace ProjectManager.Projects.AS3
 
         static public void GuessFlashPlayerForAIR(ref int majorVersion, ref int minorVersion)
         {
-            double v = majorVersion + minorVersion / 10;
+            double v = majorVersion + (double)minorVersion / 10;
             if (v < 2) { majorVersion = 9; minorVersion = 0; }
             else if (v < 2.5) { majorVersion = 10; minorVersion = 0; }
             else if (v < 2.6) { majorVersion = 10; minorVersion = 1; }
@@ -276,7 +276,8 @@ namespace ProjectManager.Projects.AS3
             else if (v < 3.0) { majorVersion = 10; minorVersion = 3; }
             else if (v < 3.1) { majorVersion = 11; minorVersion = 0; }
             else if (v < 3.2) { majorVersion = 11; minorVersion = 1; }
-            else { majorVersion = 11; minorVersion = 2; }
+            else if (v < 3.3) { majorVersion = 11; minorVersion = 2; }
+            else { majorVersion = 11; minorVersion = 3; }
         }
     }
 }
