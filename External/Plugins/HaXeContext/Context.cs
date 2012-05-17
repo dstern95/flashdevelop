@@ -29,7 +29,11 @@ namespace HaXeContext
         static readonly protected Regex re_genericType =
                     new Regex("(?<gen>[^<]+)<(?<type>.+)>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+        static public string FLASH_OLD = "flash";
+        static public string FLASH_NEW = "flash9";
+
         private HaXeSettings hxsettings;
+        private string currentSDK;
         private Dictionary<string, string> haxelibsCache;
         private bool hasAIRSupport;
         private bool hasMobileSupport;
@@ -108,6 +112,11 @@ namespace HaXeContext
             /* INITIALIZATION */
 
             settings = initSettings;
+
+            currentSDK = PathHelper.ResolvePath(hxsettings.GetDefaultSDK().Path) ?? "";
+            initSettings.CompletionModeChanged += OnCompletionModeChange;
+            OnCompletionModeChange();
+
             haxelibsCache = new Dictionary<string,string>();
             //BuildClassPath(); // defered to first use
         }
@@ -135,6 +144,14 @@ namespace HaXeContext
         {
             get { return platform == HaxeMovieOptions.CPP_PLATFORM; }
         }
+        public bool IsCsharpTarget
+        {
+            get { return platform == HaxeMovieOptions.CSHARP_PLATFORM; }
+        }
+        public bool IsJavaTarget
+        {
+            get { return platform == HaxeMovieOptions.JAVA_PLATFORM; }
+        }
         public bool IsNmeTarget
         {
             get { return platform == HaxeMovieOptions.NME_PLATFORM; }
@@ -150,9 +167,7 @@ namespace HaXeContext
             {
                 string haxelib = "haxelib";
 
-                string hxPath = PluginBase.CurrentProject != null
-                        ? PluginBase.CurrentProject.CurrentSDK
-                        : PathHelper.ResolvePath(hxsettings.GetDefaultSDK().Path);
+                string hxPath = currentSDK;
                 if (hxPath != null && Path.IsPathRooted(hxPath))
                     haxelib = Path.Combine(hxPath, haxelib);
                 
@@ -207,45 +222,46 @@ namespace HaXeContext
             ParseVersion(contextSetup.Version, ref majorVersion, ref minorVersion);
 
             // NOTE: version > 10 for non-Flash platforms
-            string lang = null;
+            string lang;
             hasAIRSupport = hasMobileSupport = false;
             features.Directives = new List<string>();
-            if (IsJavaScriptTarget) 
+            if (IsJavaScriptTarget)
             {
                 lang = "js";
-                features.Directives.Add(lang);
-            }
-            else if (IsNekoTarget) 
-            {
-                lang = "neko";
-                features.Directives.Add(lang);
             }
             else if (IsPhpTarget)
             {
                 lang = "php";
-                features.Directives.Add(lang);
+            }
+            else if (IsNekoTarget)
+            {
+                lang = "neko";
             }
             else if (IsCppTarget)
             {
                 lang = "cpp";
-                features.Directives.Add(lang);
             }
             else if (IsNmeTarget)
             {
                 lang = "cpp";
-                features.Directives.Add(lang);
                 features.Directives.Add("--remap flash:nme");
             }
-            else
+            else if (IsCsharpTarget)
             {
-                features.Directives.Add("flash");
-                features.Directives.Add("flash" + majorVersion);
-                lang = (majorVersion < 6 || majorVersion >= 9) ? "flash9" : "flash";
-
+                lang = "cs";
+            }
+            else if (IsJavaTarget)
+            {
+                lang = "java";
+            }
+            else if (IsFlashTarget)
+            {
+                lang = "flash";
                 hasAIRSupport = platform == "AIR" || platform == "AIR Mobile";
                 hasMobileSupport = platform == "AIR Mobile";
             }
-            features.Directives.Add("true");
+            else lang = platform;
+            features.Directives.Add(lang);
 
             //
             // Class pathes
@@ -257,14 +273,39 @@ namespace HaXeContext
                     : PathHelper.ResolvePath(hxsettings.GetDefaultSDK().Path);
             if (hxPath != null)
             {
+                if (currentSDK != hxPath)
+                {
+                    currentSDK = hxPath;
+                    haxelibsCache = new Dictionary<string, string>();
+                    OnCompletionModeChange();
+                }
+
                 string haxeCP = Path.Combine(hxPath, "std");
                 if (Directory.Exists(haxeCP))
                 {
+                    if (Directory.Exists(Path.Combine(haxeCP, "flash9")))
+                    {
+                        FLASH_NEW = "flash9";
+                        FLASH_OLD = "flash";
+                    }
+                    else
+                    {
+                        FLASH_NEW = "flash";
+                        FLASH_OLD = "flash8";
+                    }
+                    if (lang == "flash")
+                        lang = (majorVersion >= 6 && majorVersion < 9) ? FLASH_OLD : FLASH_NEW;
+
                     PathModel std = PathModel.GetModel(haxeCP, this);
                     if (!std.WasExplored && !Settings.LazyClasspathExploration)
                     {
                         PathExplorer stdExplorer = new PathExplorer(this, std);
-                        stdExplorer.HideDirectories(new string[] { "flash", "flash9", "js", "neko", "php", "cpp" });
+                        string[] keep = new string[] { "sys", "haxe" };
+                        List<String> hide = new List<string>();
+                        foreach (string dir in Directory.GetDirectories(haxeCP))
+                            if (Array.IndexOf<string>(keep, Path.GetFileName(dir)) < 0)
+                                hide.Add(Path.GetFileName(dir));
+                        stdExplorer.HideDirectories(hide);
                         stdExplorer.OnExplorationDone += new PathExplorer.ExplorationDoneHandler(RefreshContextCache);
                         stdExplorer.Run();
                     }
@@ -302,10 +343,9 @@ namespace HaXeContext
             if (proj != null)
             {
                 foreach (string param in proj.BuildHXML(new string[0], "", false))
-                    if (param.IndexOf("-lib ") == 0)
+                    if (!string.IsNullOrEmpty(param) && param.IndexOf("-lib ") == 0)
                         AddPath(LookupLibrary(param.Substring(5)));
             }
-
 
             // add external pathes
             List<PathModel> initCP = classPath;
@@ -444,7 +484,7 @@ namespace HaXeContext
                     // (you don't import classes defined in modules but the module itself)
                     if (needModule)
                     {
-                        item = new MemberModel(qmodule, qmodule, FlagType.Class, Visibility.Public);
+                        item = new MemberModel(qmodule, qmodule, FlagType.Class | FlagType.Module, Visibility.Public);
                         fullList.Add(item);
                     }
                     return true;
@@ -457,7 +497,13 @@ namespace HaXeContext
             {
                 if ((import.Flags & mask) > 0)
                 {
-                    fullList.Add(import);
+                    /*if (import is ClassModel)
+                    {
+                        MemberModel cmodel = (import as ClassModel).ToMemberModel();
+                        cmodel.Name = cmodel.Type;
+                        fullList.Add(cmodel);
+                    }
+                    else*/ fullList.Add(import);
                 }
             }
 
@@ -487,9 +533,14 @@ namespace HaXeContext
                 }
                 // HX files are "modules": when imported all the classes contained are available
                 string fileName = item.Type.Replace(".", dirSeparator) + ".hx";
-                
-                if (fileName.StartsWith("flash" + dirSeparator) && (!IsFlashTarget || majorVersion > 8)) // flash9 remap
-                    fileName = "flash9" + fileName.Substring(5);
+
+                if (fileName.StartsWith("flash" + dirSeparator))
+                {
+                    if (!IsFlashTarget || majorVersion > 8) // flash9 remap
+                        fileName = FLASH_NEW + fileName.Substring(5);
+                    else
+                        fileName = FLASH_OLD + fileName.Substring(5);
+                }
 
                 foreach (PathModel aPath in classPath) 
                     if (aPath.IsValid && !aPath.Updating)
@@ -697,6 +748,79 @@ namespace HaXeContext
         #endregion
 
         #region Custom code completion
+
+        internal IHaxeCompletionHandler completionModeHandler;
+
+        /// <summary>
+        /// Checks completion mode changes to start/restart/stop the haXe completion server if needed.
+        /// </summary>
+        private void OnCompletionModeChange()
+        {
+            if (completionModeHandler != null)
+            {
+                completionModeHandler.Stop();
+                completionModeHandler = null;
+            }
+
+            var haxeSettings = (settings as HaXeSettings);
+            switch (haxeSettings.CompletionMode)
+            {
+                case HaxeCompletionModeEnum.Compiler:
+                    completionModeHandler = new CompilerCompletionHandler(createHaxeProcess(""));
+                    break;
+                case HaxeCompletionModeEnum.CompletionServer:
+                    if (haxeSettings.CompletionServerPort < 1024)
+                        completionModeHandler = new CompilerCompletionHandler(createHaxeProcess(""));
+                    else
+                    {
+                        completionModeHandler =
+                            new CompletionServerCompletionHandler(
+                                createHaxeProcess("--wait " + haxeSettings.CompletionServerPort),
+                                haxeSettings.CompletionServerPort);
+                        (completionModeHandler as CompletionServerCompletionHandler).FallbackNeeded += new FallbackNeededHandler(Context_FallbackNeeded);
+                    }
+                    break;
+            }
+        }
+
+        void Context_FallbackNeeded(bool notSupported)
+        {
+            TraceManager.AddAsync("This SDK does not support server mode");
+            if (completionModeHandler != null)
+            {
+                completionModeHandler.Stop();
+                completionModeHandler = null;
+            }
+            completionModeHandler = new CompilerCompletionHandler(createHaxeProcess(""));
+        }
+
+        /**
+         * Starts a haxe.exe process with the given arguments.
+         */
+        private Process createHaxeProcess(string args)
+        {
+            // compiler path
+            var hxPath = currentSDK ?? ""; 
+            var process = Path.Combine(hxPath, "haxe.exe");
+            if (!File.Exists(process))
+            {
+                ErrorManager.ShowInfo(String.Format(TextHelper.GetString("Info.HaXeExeError"), "\n"));
+                return null;
+            }
+
+            // Run haxe compiler
+            Process proc = new Process();
+            proc.StartInfo.FileName = process;
+            proc.StartInfo.Arguments = args;
+            proc.StartInfo.UseShellExecute = false;
+            proc.StartInfo.RedirectStandardOutput = true;
+            proc.StartInfo.RedirectStandardError = true;
+            proc.StartInfo.CreateNoWindow = true;
+            proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            proc.EnableRaisingEvents = true;
+            return proc;
+        }
+
         /// <summary>
         /// Let contexts handle code completion
         /// </summary>
@@ -706,7 +830,7 @@ namespace HaXeContext
         /// <returns>Null (not handled) or member list</returns>
         public override MemberList ResolveDotContext(ScintillaNet.ScintillaControl sci, ASExpr expression, bool autoHide)
         {
-            if (hxsettings.DisableCompilerCompletion)
+            if (hxsettings.CompletionMode == HaxeCompletionModeEnum.FlashDevelop)
                 return null;
 
             if (autoHide && !hxsettings.DisableCompletionOnDemand)
@@ -723,7 +847,7 @@ namespace HaXeContext
 
             MemberList list = new MemberList();
            
-            HaXeCompletion hc = new HaXeCompletion(sci, expression.Position);
+            HaXeCompletion hc = new HaXeCompletion(sci, expression.Position, completionModeHandler);
             ArrayList al = hc.getList();
             if (al == null || al.Count == 0) 
                 return null; // haxe.exe not found
@@ -912,7 +1036,7 @@ namespace HaXeContext
         /// <returns>Null (not handled) or function signature</returns>
         public override MemberModel ResolveFunctionContext(ScintillaNet.ScintillaControl sci, ASExpr expression, bool autoHide)
         {
-            if (hxsettings.DisableCompilerCompletion)
+            if (hxsettings.CompletionMode == HaxeCompletionModeEnum.FlashDevelop)
                 return null;
 
             if (autoHide && !hxsettings.DisableCompletionOnDemand)
@@ -934,7 +1058,7 @@ namespace HaXeContext
                 val == "trace")
                 return null;
 
-            HaXeCompletion hc = new HaXeCompletion(sci, expression.Position);
+            HaXeCompletion hc = new HaXeCompletion(sci, expression.Position + 1, completionModeHandler);
             ArrayList al = hc.getList();
             if (al == null || al.Count == 0)
                 return null; // haxe.exe not found
@@ -998,8 +1122,8 @@ namespace HaXeContext
         public override void CheckSyntax()
         {
             EventManager.DispatchEvent(this, new NotifyEvent(EventType.ProcessStart));
-            HaXeCompletion hc = new HaXeCompletion(ASContext.CurSciControl, 0);
-            ArrayList result = hc.getList(false);
+            HaXeCompletion hc = new HaXeCompletion(ASContext.CurSciControl, 0, completionModeHandler);
+            ArrayList result = hc.getList();
             if (result.Count == 0 || (string)result[0] != "error")
             {
                 EventManager.DispatchEvent(this, new TextEvent(EventType.ProcessEnd, "Done(0)"));
@@ -1188,58 +1312,6 @@ namespace HaXeContext
             // run
             RunCMD(command);
             return true;
-        }
-
-        public bool NmeRun(string config)
-        {
-            HaxeProject project = PluginBase.CurrentProject as HaxeProject;
-            if (project == null || project.OutputType != OutputType.Application) 
-                return false;
-
-            string compiler = project.CurrentSDK;
-            if (compiler == null) compiler = "haxelib";
-            else if (Directory.Exists(compiler)) compiler = Path.Combine(compiler, "haxelib.exe");
-            else compiler = compiler.Replace("haxe.exe", "haxelib.exe");
-
-            if (String.IsNullOrEmpty(config)) config = "flash";
-            else if (config.IndexOf("android") >= 0) CheckADB();
-            if (project.TraceEnabled) config += " -debug";
-
-            if (config.StartsWith("flash") && config.IndexOf("-DSWF_PLAYER") < 0)
-                config += GetSwfPlayer();
-            
-            string args = "run nme run \"" + project.OutputPathAbsolute + "\" " + config;
-            string oldWD = MainForm.WorkingDirectory;
-            MainForm.WorkingDirectory = project.Directory;
-            MainForm.CallCommand("RunProcessCaptured", compiler + ";" + args);
-            MainForm.WorkingDirectory = oldWD;
-            return true;
-        }
-
-        private void CheckADB()
-        {
-            if (Process.GetProcessesByName("adb").Length > 0) 
-                return;
-
-            string adb = Environment.ExpandEnvironmentVariables("%ANDROID_SDK%/platform-tools");
-            if (adb.StartsWith("%") || !Directory.Exists(adb)) 
-                adb = Path.Combine(PathHelper.ToolDir, "android/platform-tools");
-            if (Directory.Exists(adb)) 
-            {
-                adb = Path.Combine(adb, "adb.exe");
-                ProcessStartInfo p = new ProcessStartInfo(adb, "get-state");
-                p.UseShellExecute = true;
-                p.WindowStyle = ProcessWindowStyle.Hidden;
-                Process.Start(p);
-            }
-        }
-
-        private string GetSwfPlayer()
-        {
-            DataEvent de = new DataEvent(EventType.Command, "FlashViewer.GetFlashPlayer", null);
-            EventManager.DispatchEvent(this, de);
-            if (de.Handled && !String.IsNullOrEmpty((string)de.Data)) return " -DSWF_PLAYER=\"" + de.Data + "\"";
-            else return "";
         }
         #endregion
 

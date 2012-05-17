@@ -67,8 +67,10 @@ namespace ASCompletion.Completion
                 return false;
 			try
 			{
-				int eolMode = Sci.EOLMode;
+                if (Sci.IsSelectionRectangle) 
+                    return false;
 				// code auto
+				int eolMode = Sci.EOLMode;
 				if (((Value == 10) && (eolMode != 1)) || ((Value == 13) && (eolMode == 1)))
 				{
                     if (ASContext.HasContext && ASContext.Context.IsFileValid) HandleStructureCompletion(Sci);
@@ -1435,7 +1437,7 @@ namespace ASCompletion.Completion
             // Expression before cursor
             expr.LocalVars = ParseLocalVars(expr);
             result = EvalExpression(expr.Value, expr, aFile, aClass, true, true);
-            if (result.IsNull())
+            if (result.IsNull() || (result.Member != null && (result.Member.Flags & FlagType.Function) == 0))
             {
                 // custom completion
                 MemberModel customMethod = ctx.ResolveFunctionContext(Sci, expr, autoHide);
@@ -1790,6 +1792,7 @@ namespace ASCompletion.Completion
                 CompletionList.Show(customList, autoHide, tail);
                 return true;
             }
+            //return true;
 
             // Context
             ASResult result;
@@ -2171,7 +2174,11 @@ namespace ASCompletion.Completion
                 if ((member.Flags & mask) == 0 || prev == member.Name) 
                     if (!showClassVars || member.Type != "Class") continue;
                 prev = member.Name;
-                list.Add(new MemberItem(member));
+                var item = new MemberItem(member);
+                if (item.Label.EndsWith("BitmapData"))
+                {
+            }
+                list.Add(item);
             }
 
             CompletionList.Show(list, false, tail);
@@ -2909,6 +2916,7 @@ namespace ASCompletion.Completion
             bool hasGenerics = features.hasGenerics;
             bool hadWS = false;
             bool hadDot = ignoreWhiteSpace;
+            int dotCount = 0;
             bool inRegex = false;
             char dot = features.dot[features.dot.Length-1];
             while (position > minPos)
@@ -3040,7 +3048,15 @@ namespace ASCompletion.Completion
                     {
                         if (features.dot.Length == 2)
                             hadDot = position > 0 && Sci.CharAt(position - 1) == features.dot[0];
-                        else hadDot = true;
+                        else
+                        {
+                            hadDot = true;
+                            if (++dotCount == 3) // haxe's triple dot in for()
+                            {
+                                sb.Remove(0, 2);
+                                break;
+                            }
+                        }
                         sb.Insert(0, c);
                     }
                     else if (characterClass.IndexOf(c) >= 0)
@@ -3052,6 +3068,7 @@ namespace ASCompletion.Completion
                         }
                         hadWS = false;
                         hadDot = false;
+                        dotCount = 0;
                         sb.Insert(0, c);
                         startPos = position;
                     }
@@ -3225,14 +3242,7 @@ namespace ASCompletion.Completion
                 model = ASContext.Context.GetCodeModel(expression.FunctionBody);
                 foreach (MemberModel member in model.Members)
                 {
-					if (cm.Name == member.Name
-						&& cm.Namespace == member.Namespace
-						&& cm.Type == member.Type
-						&& cm.Flags == member.Flags
-						&& cm.Access == member.Access)
-					{
-						continue;
-					}
+					if (cm.Equals(member)) continue;
 
                     member.Flags |= FlagType.LocalVar;
                     member.LineFrom += expression.FunctionOffset;

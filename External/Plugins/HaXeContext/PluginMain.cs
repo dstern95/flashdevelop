@@ -117,18 +117,27 @@ namespace HaXeContext
             {
                 case EventType.Command:
                     DataEvent de = e as DataEvent;
-                    if (de != null && de.Action == "ProjectManager.RunCustomCommand")
+                    if (de == null) return;
+                    if (de.Action == "ProjectManager.RunCustomCommand")
                     {
-                        if ((contextInstance as Context).IsNmeTarget)
-                        {
-                            e.Handled = (contextInstance as Context).NmeRun(de.Data as string);
-                        }
+                        if (contextInstance.IsNmeTarget)
+                            e.Handled = NMEHelper.Run(de.Data as string);
+                    }
+                    else if (de.Action == "ProjectManager.BuildingProject" || de.Action == "ProjectManager.TestingProject")
+                    {
+                        var completionHandler = contextInstance.completionModeHandler as CompletionServerCompletionHandler;
+                        if (completionHandler != null && !completionHandler.IsRunning())
+                            completionHandler.StartServer();
+                    }
+                    else if (de.Action == "ProjectManager.Project")
+                    {
+                        NMEHelper.Monitor(de.Data as IProject);
                     }
                     break;
 
                 case EventType.UIStarted:
-                    contextInstance = new Context(settingObject);
                     ValidateSettings();
+                    contextInstance = new Context(settingObject);
                     // Associate this context with haXe language
                     ASCompletion.Context.ASContext.RegisterLanguage(contextInstance, "haxe");
                     break;
@@ -195,7 +204,13 @@ namespace HaXeContext
                 }
             }
             else foreach (InstalledSDK sdk in settingObject.InstalledSDKs) ValidateSDK(sdk);
-            
+
+            if (settingObject.CompletionServerPort == 0)
+            {
+                settingObject.CompletionServerPort = 6000;
+                settingObject.CompletionMode = HaxeCompletionModeEnum.CompletionServer;
+            }
+
             settingObject.OnClasspathChanged += SettingObjectOnClasspathChanged;
         }
 

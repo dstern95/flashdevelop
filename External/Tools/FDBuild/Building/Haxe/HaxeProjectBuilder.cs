@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Runtime.Remoting.Channels.Ipc;
 using System.Text;
 using ProjectManager.Helpers;
 using ProjectManager.Projects.Haxe;
@@ -20,7 +19,7 @@ namespace ProjectManager.Building.Haxe
         {
             this.project = project;
 
-            string basePath = compilerPath ?? @"C:\Program Files\Motion-Twin\haxe"; // default installation
+            string basePath = compilerPath ?? @"C:\Motion-Twin\haxe"; // default installation
             haxePath = Path.Combine(basePath, "haxe.exe");
             if (!File.Exists(haxePath)) 
                 haxePath = "haxe.exe"; // hope you have it in your environment path!
@@ -34,11 +33,10 @@ namespace ProjectManager.Building.Haxe
             string outputDir = Path.GetDirectoryName(project.OutputPathAbsolute);
             if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
 
-            if (project.IsNmeOutput)
+            if (project.IsNmeOutput && !string.IsNullOrEmpty(project.TargetBuild))
             {
                 haxePath = haxePath.Replace("haxe.exe", "haxelib.exe");
-                string config = project.TestMovieBehavior == ProjectManager.Projects.TestMovieBehavior.Custom ? project.TestMovieCommand : null;
-                if (String.IsNullOrEmpty(config)) config = "flash";
+                string config = project.TargetBuild;
                 string haxeNmeArgs = String.Join(" ", BuildNmeCommand(extraClasspaths, output, config, noTrace, null));
                 Console.WriteLine("haxelib " + haxeNmeArgs);
                 if (!ProcessRunner.Run(haxePath, haxeNmeArgs, false))
@@ -63,6 +61,11 @@ namespace ProjectManager.Building.Haxe
             }
 
             string haxeArgs = String.Join(" ", project.BuildHXML(extraClasspaths, output, noTrace));
+            
+            string serverPort = Environment.ExpandEnvironmentVariables("%HAXE_SERVER_PORT%");
+            if (!serverPort.StartsWith("%") && serverPort != "0")
+                haxeArgs = "--connect " + serverPort + " " + haxeArgs;
+            
             Console.WriteLine("haxe " + haxeArgs);
 
             if (!ProcessRunner.Run(haxePath, haxeArgs, false))
@@ -76,7 +79,11 @@ namespace ProjectManager.Building.Haxe
             pr.Add("run nme build");
             pr.Add(Quote(output));
             pr.Add(target);
-            if (!noTrace) pr.Add("-debug");
+            if (!noTrace)
+            {
+                pr.Add("-debug");
+                if (target.StartsWith("flash")) pr.Add("-Dfdb");
+            }
             if (extraArgs != null) pr.Add(extraArgs);
 
             return pr.ToArray();
