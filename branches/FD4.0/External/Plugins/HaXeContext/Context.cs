@@ -115,7 +115,7 @@ namespace HaXeContext
 
             currentSDK = PathHelper.ResolvePath(hxsettings.GetDefaultSDK().Path) ?? "";
             initSettings.CompletionModeChanged += OnCompletionModeChange;
-            OnCompletionModeChange();
+            //OnCompletionModeChange(); // defered to first use
 
             haxelibsCache = new Dictionary<string,string>();
             //BuildClassPath(); // defered to first use
@@ -376,6 +376,9 @@ namespace HaXeContext
                 SetTemporaryPath(tempPath);
             }
             FinalizeClasspath();
+
+            if (completionModeHandler == null)
+                OnCompletionModeChange();
         }
 
         /// <summary>
