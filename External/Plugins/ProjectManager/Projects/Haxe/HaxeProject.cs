@@ -31,8 +31,9 @@ namespace ProjectManager.Projects.Haxe
         { 
             get 
             {
-                return movieOptions.DebuggerSupported && CompilerOptions.EnableDebug && TargetBuild == "flash";
-            } 
+                return movieOptions.DebuggerSupported && CompilerOptions.EnableDebug 
+                    && (TargetBuild == "flash" || movieOptions.Platform == HaxeMovieOptions.FLASHPLAYER_PLATFORM);
+            ] 
         }
 
         public override String LibrarySWFPath
