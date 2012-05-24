@@ -44,11 +44,9 @@ Project configuration, libraries, classpaths
 	
 Native targets
 
-	Change the NME target in your Project Properties > Test Project > Edit...
-	Enter a valid target in the field, like:
-	- flash
-	- cpp
-	- android
+	Change the NME target from the main toolbar's combo right to Debug/Release selector.
+	
+	(warning: don't set a Custom Test Movie command as in previous FD release)
 	
 	Attention, for non-Flash targets you'll need to install additional compilers & SDKs:
 	http://www.haxenme.org/developers/get-started/
