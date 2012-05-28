@@ -28,12 +28,12 @@ namespace ProjectManager.Projects.Haxe
         public override string DefaultSearchFilter { get { return "*.hx"; } }
         
         public override bool EnableInteractiveDebugger 
-        { 
-            get 
+        {
+            get
             {
-                return movieOptions.DebuggerSupported && CompilerOptions.EnableDebug 
+                return movieOptions.DebuggerSupported && CompilerOptions.EnableDebug
                     && (TargetBuild == "flash" || movieOptions.Platform == HaxeMovieOptions.FLASHPLAYER_PLATFORM);
-            ] 
+            }
         }
 
         public override String LibrarySWFPath
