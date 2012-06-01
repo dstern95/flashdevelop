@@ -32,7 +32,7 @@ namespace ProjectManager.Projects.Haxe
             get
             {
                 return movieOptions.DebuggerSupported && CompilerOptions.EnableDebug
-                    && (TargetBuild == "flash" || movieOptions.Platform == HaxeMovieOptions.FLASHPLAYER_PLATFORM);
+                    && (movieOptions.Platform == HaxeMovieOptions.NME_PLATFORM || movieOptions.Platform == HaxeMovieOptions.FLASHPLAYER_PLATFORM);
             }
         }
 
