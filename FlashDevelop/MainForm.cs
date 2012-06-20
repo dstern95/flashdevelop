@@ -735,13 +735,7 @@ namespace FlashDevelop
         private void InitializeSettings()
         {
             this.appSettings = SettingObject.GetDefaultSettings();
-            if (!File.Exists(FileNameHelper.SettingData))
-            {
-                String folder = Path.GetDirectoryName(FileNameHelper.SettingData);
-                if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-                ObjectSerializer.Serialize(FileNameHelper.SettingData, this.appSettings);
-            }
-            else
+            if (File.Exists(FileNameHelper.SettingData))
             {
                 Object obj = ObjectSerializer.Deserialize(FileNameHelper.SettingData, this.appSettings, false);
                 this.appSettings = (SettingObject)obj;
@@ -1704,6 +1698,11 @@ namespace FlashDevelop
                 {
                     this.appSettings.WindowSize = this.Size;
                     this.appSettings.WindowPosition = this.Location;
+                }
+                if (!File.Exists(FileNameHelper.SettingData))
+                {
+                    String folder = Path.GetDirectoryName(FileNameHelper.SettingData);
+                    if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
                 }
                 ObjectSerializer.Serialize(FileNameHelper.SettingData, this.appSettings);
                 if (this.isFullScreen)
