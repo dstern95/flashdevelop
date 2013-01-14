@@ -1,0 +1,74 @@
+# HG changeset patch
+# User pelsass
+# Date 1338972102 -7200
+# Node ID f92c6a1446440daad5c627a68ccfe6a86599ff54
+# Parent  ae4d2f897a8fd92294f61d4d56e90e7700a912df
+Additional LexCPP keyword classes
+
+diff -r ae4d2f897a8f -r f92c6a144644 include/SciLexer.h
+--- a/include/SciLexer.h	Wed May 30 09:10:54 2012 +1000
++++ b/include/SciLexer.h	Wed Jun 06 10:41:42 2012 +0200
+@@ -160,6 +160,9 @@
+ #define SCE_C_STRINGRAW 20
+ #define SCE_C_TRIPLEVERBATIM 21
+ #define SCE_C_HASHQUOTEDSTRING 22
++#define SCE_C_WORD3 23
++#define SCE_C_WORD4 24
++#define SCE_C_WORD5 25
+ #define SCE_D_DEFAULT 0
+ #define SCE_D_COMMENT 1
+ #define SCE_D_COMMENTLINE 2
+diff -r ae4d2f897a8f -r f92c6a144644 lexers/LexCPP.cxx
+--- a/lexers/LexCPP.cxx	Wed May 30 09:10:54 2012 +1000
++++ b/lexers/LexCPP.cxx	Wed Jun 06 10:41:42 2012 +0200
+@@ -244,6 +244,9 @@
+             "Documentation comment keywords",
+             "Global classes and typedefs",
+             "Preprocessor definitions",
++            "Extended(1) keywords and identifiers",
++            "Extended(2) keywords and identifiers",
++            "Extended(3) keywords and identifiers",
+             0,
+ };
+ 
+@@ -320,6 +323,9 @@
+ 	WordList keywords2;
+ 	WordList keywords3;
+ 	WordList keywords4;
++    WordList keywords5;
++    WordList keywords6;
++    WordList keywords7;
+ 	WordList ppDefinitions;
+ 	std::map<std::string, std::string> preprocessorDefinitionsStart;
+ 	OptionsCPP options;
+@@ -402,6 +408,15 @@
+ 	case 4:
+ 		wordListN = &ppDefinitions;
+ 		break;
++    case 5:
++        wordListN = &keywords5;
++        break;
++    case 6:
++        wordListN = &keywords6;
++        break;
++    case 7:
++        wordListN = &keywords7;
++        break;
+ 	}
+ 	int firstModification = -1;
+ 	if (wordListN) {
+@@ -588,7 +603,13 @@
+ 						sc.ChangeState(SCE_C_WORD2|activitySet);
+ 					} else if (keywords4.InList(s)) {
+ 						sc.ChangeState(SCE_C_GLOBALCLASS|activitySet);
+-					}
++                    } else if (keywords5.InList(s)) {
++                        sc.ChangeState(SCE_C_WORD3|activitySet);
++                    } else if (keywords6.InList(s)) {
++                        sc.ChangeState(SCE_C_WORD4|activitySet);
++                    } else if (keywords7.InList(s)) {
++                        sc.ChangeState(SCE_C_WORD5|activitySet);
++                    }
+ 					const bool literalString = sc.ch == '\"';
+ 					if (literalString || sc.ch == '\'') {
+ 						size_t lenS = strlen(s);
