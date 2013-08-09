@@ -1,3 +1,0 @@
-for each (var name:* in $(EntryPoint)) $(CSLB){
-	{0}
-}
