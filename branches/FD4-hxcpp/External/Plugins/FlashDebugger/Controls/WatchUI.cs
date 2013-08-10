@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Text;
 using System.Windows.Forms;
-using PluginCore;
 using flash.tools.debugger;
 using flash.tools.debugger.expression;
+using FlashDebugger.Debugger.Flash;
+using PluginCore;
 
 namespace FlashDebugger.Controls
 {
@@ -73,7 +70,7 @@ namespace FlashDebugger.Controls
                     ValueExp exp = builder.parse(new java.io.StringReader(item));
                     var ctx = new ExpressionContext(PluginMain.debugManager.FlashInterface.Session, PluginMain.debugManager.FlashInterface.Session.getFrames()[PluginMain.debugManager.CurrentFrame]);
                     var obj = exp.evaluate(ctx);
-                    node = new DataNode((Variable)obj);
+                    node = new FlashDataNode((Variable)obj, item);
 				}
 				catch { }
 				node.Text = item;

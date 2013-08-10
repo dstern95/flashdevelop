@@ -2,6 +2,7 @@
 using System.Windows.Forms;
 using flash.tools.debugger;
 using FlashDebugger.Controls;
+using FlashDebugger.Debugger.Flash;
 using PluginCore;
 
 namespace FlashDebugger
@@ -49,7 +50,7 @@ namespace FlashDebugger
             {
                 foreach (Variable item in variables)
                 {
-					treeControl.AddNode(new DataNode(item));
+					treeControl.AddNode(new FlashDataNode(item));
                 }
             }
             finally
