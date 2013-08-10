@@ -13,6 +13,8 @@ using PluginCore;
 using net.sf.jni4net;
 using PluginCore.Helpers;
 using ProjectManager.Projects.Haxe;
+using FlashDebugger.Debugger.Flash;
+using FlashDebugger.Debugger;
 
 namespace FlashDebugger
 {
@@ -30,35 +32,77 @@ namespace FlashDebugger
 		ExceptionHalt
 	}
 
+    public enum DebuggerEngine
+    {
+        Flash,
+        HxCpp
+    }
+
 	public class DebuggerManager
     {
         public event StateChangedEventHandler StateChangedEvent;
 
         internal Project currentProject;
 		private BackgroundWorker bgWorker;
+        private DebuggerInterface m_Interface;
         private FlashInterface m_FlashInterface;
 		private Location m_CurrentLocation = null;
 		private Dictionary<String, String> m_PathMap = new Dictionary<String, String>();
         private Int32 m_CurrentFrame = 0;
-        private static bool jvm_up = false;
 
         public DebuggerManager()
         {
 			m_FlashInterface = new FlashInterface();
-			m_FlashInterface.m_BreakPointManager = PluginMain.breakPointManager;
-			m_FlashInterface.StartedEvent += new DebuggerEventHandler(flashInterface_StartedEvent);
-			m_FlashInterface.DisconnectedEvent += new DebuggerEventHandler(flashInterface_DisconnectedEvent);
-			m_FlashInterface.BreakpointEvent += new DebuggerEventHandler(flashInterface_BreakpointEvent);
-			m_FlashInterface.FaultEvent += new DebuggerEventHandler(flashInterface_FaultEvent);
-			m_FlashInterface.PauseEvent += new DebuggerEventHandler(flashInterface_PauseEvent);
-			m_FlashInterface.StepEvent += new DebuggerEventHandler(flashInterface_StepEvent);
-			m_FlashInterface.ScriptLoadedEvent += new DebuggerEventHandler(flashInterface_ScriptLoadedEvent);
-			m_FlashInterface.WatchpointEvent += new DebuggerEventHandler(flashInterface_WatchpointEvent);
-			m_FlashInterface.UnknownHaltEvent += new DebuggerEventHandler(flashInterface_UnknownHaltEvent);
-            m_FlashInterface.ProgressEvent += new DebuggerProgressEventHandler(flashInterface_ProgressEvent);
+            registerInterfaceEvents(m_FlashInterface);
         }
 
+        private void registerInterfaceEvents(DebuggerInterface debugger)
+        {
+            debugger.StartedEvent += new DebuggerEventHandler(flashInterface_StartedEvent);
+            debugger.DisconnectedEvent += new DebuggerEventHandler(flashInterface_DisconnectedEvent);
+            debugger.BreakpointEvent += new DebuggerEventHandler(flashInterface_BreakpointEvent);
+            debugger.FaultEvent += new DebuggerEventHandler(flashInterface_FaultEvent);
+            debugger.PauseEvent += new DebuggerEventHandler(flashInterface_PauseEvent);
+            debugger.StepEvent += new DebuggerEventHandler(flashInterface_StepEvent);
+            debugger.ScriptLoadedEvent += new DebuggerEventHandler(flashInterface_ScriptLoadedEvent);
+            debugger.WatchpointEvent += new DebuggerEventHandler(flashInterface_WatchpointEvent);
+            debugger.UnknownHaltEvent += new DebuggerEventHandler(flashInterface_UnknownHaltEvent);
+            debugger.ProgressEvent += new DebuggerProgressEventHandler(flashInterface_ProgressEvent);
+        }
+
+        /*
+        private void unregisterInterfaceEvents()
+        {
+            m_FlashInterface.StartedEvent -= new DebuggerEventHandler(flashInterface_StartedEvent);
+            m_FlashInterface.DisconnectedEvent -= new DebuggerEventHandler(flashInterface_DisconnectedEvent);
+            m_FlashInterface.BreakpointEvent -= new DebuggerEventHandler(flashInterface_BreakpointEvent);
+            m_FlashInterface.FaultEvent -= new DebuggerEventHandler(flashInterface_FaultEvent);
+            m_FlashInterface.PauseEvent -= new DebuggerEventHandler(flashInterface_PauseEvent);
+            m_FlashInterface.StepEvent -= new DebuggerEventHandler(flashInterface_StepEvent);
+            m_FlashInterface.ScriptLoadedEvent -= new DebuggerEventHandler(flashInterface_ScriptLoadedEvent);
+            m_FlashInterface.WatchpointEvent -= new DebuggerEventHandler(flashInterface_WatchpointEvent);
+            m_FlashInterface.UnknownHaltEvent -= new DebuggerEventHandler(flashInterface_UnknownHaltEvent);
+            m_FlashInterface.ProgressEvent -= new DebuggerProgressEventHandler(flashInterface_ProgressEvent);
+        }
+         */
+
         #region Startup
+
+        public void SelectDebugger(DebuggerEngine debugger)
+        {
+            // if not the same as now?
+            // fail if running
+            if (debugger == DebuggerEngine.Flash)
+            {
+                m_Interface = m_FlashInterface;
+            }
+            else
+            {
+                throw new Exception("UNIMPLEMENTED");
+            }
+        }
+
+
 
         /// <summary>
         /// 
@@ -110,42 +154,8 @@ namespace FlashDebugger
             if (!alwaysStart && !CheckCurrent()) return false;
             UpdateMenuState(DebuggerState.Starting);
 
-            // load JVM.. only once
-            if (!jvm_up)
-            {
-                try
-                {
-                    BridgeSetup bridgeSetup = null;
-                    bridgeSetup = new BridgeSetup();
+            m_FlashInterface.Initialize();
 
-                    string flexSDKPath = null;
-                    if (currentProject != null) flexSDKPath = currentProject.CurrentSDK;
-                    else flexSDKPath = PluginCore.Helpers.PathHelper.ResolvePath(PluginBase.MainForm.ProcessArgString("$(FlexSDK)"));
-
-                    if (flexSDKPath != null && Directory.Exists(flexSDKPath))
-                    {
-                        Dictionary<string, string> jvmConfig = JvmConfigHelper.ReadConfig(Path.Combine(flexSDKPath, "bin\\jvm.config"));
-                        String javaHome = JvmConfigHelper.GetJavaHome(jvmConfig, flexSDKPath);
-                        if (!String.IsNullOrEmpty(javaHome)) bridgeSetup.JavaHome = javaHome;
-                    }
-
-                    bridgeSetup.AddAllJarsClassPath(PluginCore.Helpers.PathHelper.PluginDir);
-                    bridgeSetup.AddAllJarsClassPath(Path.Combine(PluginCore.Helpers.PathHelper.ToolDir, @"flexlibs\lib"));
-                    Bridge.CreateJVM(bridgeSetup);
-                    Bridge.RegisterAssembly(typeof(IProgress).Assembly); // ??
-                    Bridge.RegisterAssembly(typeof(Bootstrap).Assembly);
-                    jvm_up = true;
-                }
-                catch (Exception ex)
-                {
-
-                    String msg = "Debugger startup error. For troubleshooting see: http://www.flashdevelop.org/wikidocs/index.php?title=F.A.Q\n";
-                    TraceManager.Add(msg + "Error details: " + ex.ToString()); 
-                    return false;
-                }
-            }
-
-			m_FlashInterface.currentProject = currentProject;
             PluginBase.MainForm.ProgressBar.Visible = true;
             PluginBase.MainForm.ProgressLabel.Visible = true;
             PluginBase.MainForm.ProgressLabel.Text = TextHelper.GetString("Info.WaitingForPlayer");

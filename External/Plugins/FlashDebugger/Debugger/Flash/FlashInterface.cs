@@ -1,54 +1,36 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
-using ASCompletion.Settings;
 using flash.tools.debugger;
 using flash.tools.debugger.events;
 using PluginCore.Localization;
 using PluginCore.Managers;
+using net.sf.jni4net;
+using PluginCore.Helpers;
+using PluginCore;
 
-namespace FlashDebugger
+namespace FlashDebugger.Debugger.Flash
 {
-	public delegate void TraceEventHandler(object sender, string trace);
-	public delegate void SwfLoadedEventHandler(object sender, SwfLoadedEvent e);
-	public delegate void SwfUnloadedEventHandler(object sender, SwfUnloadedEvent e);
-	public delegate void DebuggerEventHandler(object sender);
-    public delegate void DebuggerProgressEventHandler(object sender, int current, int total);
 
-	public class FlashInterface : IProgress
-	{
+	public class FlashInterface : IProgress, DebuggerInterface
+    {
 		// default metadata retry count 8 attempts per waitForMetadata() call * 5 calls
 		public const int METADATA_RETRIES = 8 * 5;
-		public event TraceEventHandler	TraceEvent;
-		public event DebuggerEventHandler DisconnectedEvent;
-		public event DebuggerEventHandler PauseFailedEvent;
-		public event DebuggerEventHandler StartedEvent;
-		public event DebuggerEventHandler BreakpointEvent;
-		public event DebuggerEventHandler FaultEvent;
-		public event DebuggerEventHandler PauseEvent;
-		public event DebuggerEventHandler StepEvent;
-		public event DebuggerEventHandler ScriptLoadedEvent;
-		public event DebuggerEventHandler WatchpointEvent;
-		public event DebuggerEventHandler UnknownHaltEvent;
+        public event TraceEventHandler TraceEvent;
+        public event DebuggerEventHandler DisconnectedEvent;
+        public event DebuggerEventHandler PauseFailedEvent;
+        public event DebuggerEventHandler StartedEvent;
+        public event DebuggerEventHandler BreakpointEvent;
+        public event DebuggerEventHandler FaultEvent;
+        public event DebuggerEventHandler PauseEvent;
+        public event DebuggerEventHandler StepEvent;
+        public event DebuggerEventHandler ScriptLoadedEvent;
+        public event DebuggerEventHandler WatchpointEvent;
+        public event DebuggerEventHandler UnknownHaltEvent;
         public event DebuggerProgressEventHandler ProgressEvent;
 
 		#region Public Properties
-
-		public BreakPointManager m_BreakPointManager = null;
-
-		public ProjectManager.Projects.Project currentProject
-		{
-			get
-			{
-				return m_CurrentProject;
-			}
-			set
-			{
-				m_CurrentProject = value;
-				if (m_CurrentProject == null) return;
-			}
-		}
 
 		public bool isDebuggerStarted
 		{
@@ -93,7 +75,6 @@ namespace FlashDebugger
 		private Boolean m_RequestStop;
 		private Boolean m_RequestDetach;
 		private Boolean m_StepResume;
-		private ProjectManager.Projects.Project m_CurrentProject;
 		private EventWaitHandle m_SuspendWait = new EventWaitHandle(false, EventResetMode.ManualReset);
 		private Boolean m_SuspendWaiting;
 
@@ -107,6 +88,8 @@ namespace FlashDebugger
 		private int m_MetadataAttempts;
 		private int m_PlayerFullSupport;
 
+        private static bool jvm_up = false;
+
 		#endregion
 
 		public FlashInterface()
@@ -115,6 +98,46 @@ namespace FlashDebugger
 			m_UpdateDelay = 25;
 			m_CurrentState = DebuggerState.Stopped;
 		}
+
+        public bool Initialize()
+        {
+            // load JVM.. only once
+            if (!jvm_up)
+            {
+                try
+                {
+                    BridgeSetup bridgeSetup = null;
+                    bridgeSetup = new BridgeSetup();
+
+                    string flexSDKPath = null;
+                    IProject currentProject = PluginBase.CurrentProject;
+                    if (currentProject != null) flexSDKPath = currentProject.CurrentSDK;
+                    else flexSDKPath = PluginCore.Helpers.PathHelper.ResolvePath(PluginBase.MainForm.ProcessArgString("$(FlexSDK)"));
+
+                    if (flexSDKPath != null && Directory.Exists(flexSDKPath))
+                    {
+                        Dictionary<string, string> jvmConfig = JvmConfigHelper.ReadConfig(Path.Combine(flexSDKPath, "bin\\jvm.config"));
+                        String javaHome = JvmConfigHelper.GetJavaHome(jvmConfig, flexSDKPath);
+                        if (!String.IsNullOrEmpty(javaHome)) bridgeSetup.JavaHome = javaHome;
+                    }
+
+                    bridgeSetup.AddAllJarsClassPath(PluginCore.Helpers.PathHelper.PluginDir);
+                    bridgeSetup.AddAllJarsClassPath(Path.Combine(PluginCore.Helpers.PathHelper.ToolDir, @"flexlibs\lib"));
+                    Bridge.CreateJVM(bridgeSetup);
+                    Bridge.RegisterAssembly(typeof(IProgress).Assembly); // ??
+                    Bridge.RegisterAssembly(typeof(Bootstrap).Assembly);
+                    jvm_up = true;
+                }
+                catch (Exception ex)
+                {
+
+                    String msg = "Debugger startup error. For troubleshooting see: http://www.flashdevelop.org/wikidocs/index.php?title=F.A.Q\n";
+                    TraceManager.Add(msg + "Error details: " + ex.ToString());
+                    return false;
+                }
+            }
+            return true;
+        }
 
 		/// <summary>
 		/// Main loop

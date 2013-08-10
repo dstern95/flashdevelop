@@ -7,6 +7,7 @@ using PluginCore.Controls;
 using FlashDebugger.Controls;
 using ScintillaNet;
 using PluginCore;
+using FlashDebugger.Debugger.Flash;
 
 namespace FlashDebugger
 {

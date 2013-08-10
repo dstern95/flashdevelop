@@ -1,14 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Aga.Controls.Tree;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Aga.Controls.Tree.NodeControls;
-using flash.tools.debugger;
-using PluginCore.Localization;
 using PluginCore;
-using flash.tools.debugger.expression;
+using PluginCore.Localization;
 
 namespace FlashDebugger.Controls
 {
@@ -115,25 +113,16 @@ namespace FlashDebugger.Controls
 		void ValueNodeTextBox_IsEditEnabledValueNeeded(object sender, NodeControlValueEventArgs e)
 		{
             DataNode node = e.Node.Tag as DataNode;
-			int type = node.Variable.getValue().getType();
-			if (type != VariableType_.BOOLEAN && type != VariableType_.NUMBER && type != VariableType_.STRING)
-			{
-				e.Value = false;
-			}
+            e.Value = node.EditEnabled;
 		}
 
 		void ValueNodeTextBox_DrawText(object sender, DrawEventArgs e)
 		{
-            try
+            DataNode node = e.Node.Tag as DataNode;
+            if (node.HasValueChanged)
             {
-                DataNode node = e.Node.Tag as DataNode;
-                FlashInterface flashInterface = PluginMain.debugManager.FlashInterface;
-                if (node.Variable != null && node.Variable.hasValueChanged(flashInterface.Session))
-                {
-                    e.TextColor = Color.Red;
-                }
+                e.TextColor = Color.Red;
             }
-            catch (NullReferenceException) { }
 		}
 
         public DataNode AddNode(DataNode node)
@@ -201,23 +190,8 @@ namespace FlashDebugger.Controls
 			}
 			else
 			{
-				PanelsHelper.watchUI.AddElement(GetVariablePath(node));
+				PanelsHelper.watchUI.AddElement(node.VariablePath);
 			}
-		}
-
-		private String GetVariablePath(Node node)
-		{
-			String ret = "";
-			if (node.Tag != null && node.Tag is String)
-                return (String)node.Tag; // fix for: live tip value has no parent
-            if (node.Parent != null) ret = GetVariablePath(node.Parent);
-			if (node is DataNode)
-			{
-				DataNode datanode = node as DataNode;
-				if (ret != "" && datanode.Variable != null) ret += ".";
-				if (datanode.Variable != null) ret += datanode.Variable.getName();
-			}
-			return ret;
 		}
 
 		void TreeSelectionChanged(Object sender, EventArgs e)
@@ -233,125 +207,20 @@ namespace FlashDebugger.Controls
         {
             if (e.Node.Index >= 0)
             {
-                DataNode node = e.Node.Tag as DataNode;
-				if (node.Nodes.Count == 0 && node.Variable != null)
+                DataNode dnode = e.Node.Tag as DataNode;
+                if (dnode.Nodes.Count == 0 && !dnode.IsLeaf)
                 {
-					FlashInterface flashInterface = PluginMain.debugManager.FlashInterface;
-					List<DataNode> nodes = new List<DataNode>();
-					List<DataNode> inherited = new List<DataNode>();
-					List<DataNode> statics = new List<DataNode>();
-					int tmpLimit = node.ChildrenShowLimit;
-					foreach (Variable member in node.Variable.getValue().getMembers(flashInterface.Session))
-					{
-						DataNode memberNode = new DataNode(member);
-                        
-						if (member.isAttributeSet(VariableAttribute_.IS_STATIC))
-						{
-							statics.Add(memberNode);
-						}
-						else if (member.getLevel() > 0)
-						{
-							inherited.Add(memberNode);
-						}
-						else
-						{
-							nodes.Add(memberNode);
-						}
-					}
-					if (inherited.Count > 0)
-					{
-						DataNode inheritedNode = new DataNode("[inherited]");
-						inherited.Sort();
-						foreach (DataNode item in inherited)
-						{
-							inheritedNode.Nodes.Add(item);
-						}
-						node.Nodes.Add(inheritedNode);
-					}
-					if (statics.Count > 0)
-					{
-						DataNode staticNode = new DataNode("[static]");
-						statics.Sort();
-						foreach (DataNode item in statics)
-						{
-							staticNode.Nodes.Add(item);
-						}
-						node.Nodes.Add(staticNode);
-					}
-					//test children
-					foreach (String ch in node.Variable.getValue().getClassHierarchy(false))
-					{
-						if (ch.Equals("flash.display::DisplayObjectContainer"))
-						{
-							double numChildren = ((java.lang.Double)node.Variable.getValue().getMemberNamed(flashInterface.Session, "numChildren").getValue().getValueAsObject()).doubleValue();
-							DataNode childrenNode = new DataNode("[children]");
-							for (int i = 0; i < numChildren; i++)
-							{
-								try
-								{
-                                    IASTBuilder b = new ASTBuilder(false);
-                                    string cmd = GetVariablePath(node) + ".getChildAt(" + i + ")";
-                                    ValueExp exp = b.parse(new java.io.StringReader(cmd));
-                                    var ctx = new ExpressionContext(flashInterface.Session, flashInterface.Session.getFrames()[PluginMain.debugManager.CurrentFrame]);
-                                    var obj = exp.evaluate(ctx);
-                                    if (obj is flash.tools.debugger.concrete.DValue) obj = new flash.tools.debugger.concrete.DVariable("getChildAt(" + i + ")", (flash.tools.debugger.concrete.DValue)obj);
-                                    DataNode childNode = new DataNode((Variable)obj);
-                                    childNode.Text = "child_" + i;
-									childrenNode.Nodes.Add(childNode);
-								}
-                                catch (Exception) { }
-							}
-							node.Nodes.Add(childrenNode);
-						}
-                        else if (ch.Equals("flash.events::EventDispatcher"))
-                        {
-                            Variable list = node.Variable.getValue().getMemberNamed(flashInterface.Session, "listeners");
-                            var omg = list.getName();
-                            /*
-                            double numChildren = ((java.lang.Double)node.Variable.getValue().getMemberNamed(flashInterface.Session, "numChildren").getValue().getValueAsObject()).doubleValue();
-                            DataNode childrenNode = new DataNode("[children]");
-                            for (int i = 0; i < numChildren; i++)
-                            {
-                                try
-                                {
-
-                                    IASTBuilder b = new ASTBuilder(false);
-                                    string cmd = GetVariablePath(node) + ".getChildAt(" + i + ")";
-                                    ValueExp exp = b.parse(new java.io.StringReader(cmd));
-                                    var ctx = new ExpressionContext(flashInterface.Session, flashInterface.Session.getFrames()[PluginMain.debugManager.CurrentFrame]);
-                                    var obj = exp.evaluate(ctx);
-                                    if (obj is flash.tools.debugger.concrete.DValue) obj = new flash.tools.debugger.concrete.DVariable("child_" + i, (flash.tools.debugger.concrete.DValue)obj);
-                                    DataNode childNode = new DataNode((Variable)obj);
-                                    childrenNode.Nodes.Add(childNode);
-                                }
-                                catch (Exception) { }
-                            }
-                            node.Nodes.Add(childrenNode);
-                             * */
-                        }
-					}
-					//test children
-					nodes.Sort();
-					_tree.BeginUpdate();
-					foreach (DataNode item in nodes)
-					{
-						if (0 == tmpLimit--) break;
-						node.Nodes.Add(item);
-					}
-					if (tmpLimit == -1)
-					{
-						DataNode moreNode = new DataNode("...");
-						node.Nodes.Add(moreNode);
-					}
-					_tree.EndUpdate();
+                    _tree.BeginUpdate();
+                    dnode.LoadChildren();
+                    _tree.EndUpdate();
                 }
             }
         }
 
 		void _tree_NodeMouseDoubleClick(object sender, TreeNodeAdvMouseEventArgs e)
 		{
-			DataNode node = e.Node.Tag as DataNode;
-			if (node.Text == "..." && node.Variable == null)
+			DataNode node = e.Node.Tag as ContinuedDataNode;
+            if (node != null)
 			{
 				e.Handled = true;
 				_tree.BeginUpdate();

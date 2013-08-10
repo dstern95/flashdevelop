@@ -97,6 +97,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\ContinuedDataNode.cs" />
     <Compile Include="Controls\DataTreeModel.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -133,10 +134,12 @@
     <Compile Include="Controls\ViewerForm.Designer.cs">
       <DependentUpon>ViewerForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Debugger\DebuggerInterface.cs" />
     <Compile Include="Debugger\DebuggerManager.cs" />
     <Compile Include="Debugger\ExpressionContext.cs" />
-    <Compile Include="Debugger\FlashInterface.cs" />
     <Compile Include="Debugger\VariableFacade.cs" />
+    <Compile Include="Debugger\Flash\FlashDataNode.cs" />
+    <Compile Include="Debugger\Flash\FlashInterface.cs" />
     <Compile Include="Helpers\MenusHelper.cs" />
     <Compile Include="Helpers\PanelsHelper.cs" />
     <Compile Include="Helpers\ScintillaHelper.cs" />
