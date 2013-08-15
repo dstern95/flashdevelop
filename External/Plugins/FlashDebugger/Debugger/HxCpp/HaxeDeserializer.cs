@@ -17,6 +17,25 @@ namespace FlashDebugger.Debugger.HxCpp
 			this.constructor = constructor;
 			this.arguments = new List<object>();
 		}
+
+		public override string ToString()
+		{
+			string ret = name + "::" + constructor + "(";
+			bool first = true;
+			foreach (object o in arguments)
+			{
+				if (!first) ret += ", ";
+				first = false;
+				ret += o.ToString();
+			}
+			ret += ")";
+			return ret;
+		}
+	}
+
+	// todo
+	public class HaxeList : List<object>
+	{
 	}
 
 	public class HaxeDeserializer
@@ -170,9 +189,16 @@ namespace FlashDebugger.Debugger.HxCpp
 				return stringCache[i];
 			}
 			int len = deserializeInt(buffer);
+			// checked len?
+			int delim = buffer.ReadByte();
+			if (delim != ':')
+			{
+				throw new HaxeSerializationFormatException();
+			}
 			byte[] tmp = new byte[len];
 			buffer.Read(tmp, 0, len);
-			string ret = System.Text.Encoding.Default.GetString(tmp);
+			string tmp2 = System.Text.Encoding.Default.GetString(tmp);
+			string ret = System.Web.HttpUtility.UrlDecode(tmp2);
 			stringCache.Add(ret);
 			return ret;
 		}
@@ -185,6 +211,10 @@ namespace FlashDebugger.Debugger.HxCpp
 
 			// Enum (by index) : same as by name but using j instead of w for prefix, and <int>: instead of the constructor name :
 
+			// NOTE: DOCUMENTATION IS WRONG, here real example
+
+			// wy16:debugger.Messagey13:ThreadStopped:5zy4:Mainy4:mainy7:Main.hxi21
+
 			string name = (string)Deserialize(buffer);
 			string constructor;
 			if (byName)
@@ -193,10 +223,12 @@ namespace FlashDebugger.Debugger.HxCpp
 			}
 			else
 			{
+				int idelim = buffer.ReadByte();
+				if (idelim != ':') throw new HaxeSerializationFormatException();
 				constructor = string.Format("{0}", deserializeInt(buffer));
-				int delim = buffer.ReadByte();
-				if (delim != ':') throw new HaxeSerializationFormatException();
 			}
+			int delim = buffer.ReadByte();
+			if (delim != ':') throw new HaxeSerializationFormatException();
 			int numargs = deserializeInt(buffer);
 			HaxeEnum ret = new HaxeEnum(name, constructor);
 			objectCache.Add(ret);
@@ -207,10 +239,10 @@ namespace FlashDebugger.Debugger.HxCpp
 			return ret;
 		}
 
-		private List<object> deserializeList(Stream buffer)
+		private HaxeList deserializeList(Stream buffer)
 		{
 			// List	 : l followed by the list of serialized items, and ending with a h (ex : lnnh for a List containing two nulls)
-			List<object> ret = new List<object>();
+			HaxeList ret = new HaxeList();
 			object obj = Deserialize(buffer); 
 			while (!(obj is ListTerminator))
 			{
