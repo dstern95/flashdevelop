@@ -4,7 +4,7 @@ using System.Text;
 using System.Net.Sockets;
 using System.Net;
 
-namespace FlashDebugger.Debugger.HxCpp
+namespace FlashDebugger.Debugger.HxCpp.Server
 {
 	/// <summary>
 	/// Created socket, listens accepts, creates Session object
@@ -26,11 +26,20 @@ namespace FlashDebugger.Debugger.HxCpp
 
 		public Session Accept()
 		{
-			Socket cli = listenSocket.Accept();
-			PluginCore.Managers.TraceManager.AddAsync("Accepted", -1);
-			Session sess = new Session(cli);
+			if (listenSocket.Poll(5000000, SelectMode.SelectRead))
+			{
+				Socket cli = listenSocket.Accept();
+				PluginCore.Managers.TraceManager.AddAsync("Accepted", -1);
+				Session sess = new Session(cli);
 
-			return sess;
+				return sess;
+			}
+			throw new Exception("TIMEOUT");
+		}
+
+		public void StopListen()
+		{
+			listenSocket.Close();
 		}
 	}
 }

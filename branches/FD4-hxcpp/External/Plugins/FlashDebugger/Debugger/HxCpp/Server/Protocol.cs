@@ -4,7 +4,7 @@ using System.Text;
 using System.Net.Sockets;
 using System.IO;
 
-namespace FlashDebugger.Debugger.HxCpp
+namespace FlashDebugger.Debugger.HxCpp.Server
 {
 	class Protocol
 	{
@@ -44,7 +44,7 @@ namespace FlashDebugger.Debugger.HxCpp
 		{
 			// make a "header"
 			string len = string.Format("{0:D8}", data.Length);
-			PluginCore.Managers.TraceManager.AddAsync("writeFrame " + len + ": " + Encoding.ASCII.GetString(data), -1);
+			//PluginCore.Managers.TraceManager.AddAsync("writeFrame " + len + ": " + Encoding.ASCII.GetString(data), -1);
 			socket.Send(Encoding.ASCII.GetBytes(len));
 			socket.Send(data);
 		}
@@ -66,7 +66,7 @@ namespace FlashDebugger.Debugger.HxCpp
 
 			byte[] ret = new byte[len];
 			socket.Receive(ret, len, SocketFlags.None);
-			PluginCore.Managers.TraceManager.AddAsync("readFrame " + Encoding.ASCII.GetString(lenBuf) +": " +Encoding.ASCII.GetString(ret), -1);
+			//PluginCore.Managers.TraceManager.AddAsync("readFrame " + Encoding.ASCII.GetString(lenBuf) +": " +Encoding.ASCII.GetString(ret), -1);
 			return ret;
 		}
 

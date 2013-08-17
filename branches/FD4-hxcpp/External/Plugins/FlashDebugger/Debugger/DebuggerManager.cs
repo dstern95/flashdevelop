@@ -46,6 +46,7 @@ namespace FlashDebugger
 		private BackgroundWorker bgWorker;
         private DebuggerInterface m_Interface;
         private FlashInterface m_FlashInterface;
+		private FlashDebugger.Debugger.HxCpp.HxCppInterface m_HxCppInterface;
 		private Location m_CurrentLocation = null;
 		private Dictionary<String, String> m_PathMap = new Dictionary<String, String>();
         private Int32 m_CurrentFrame = 0;
@@ -54,6 +55,9 @@ namespace FlashDebugger
         {
 			m_FlashInterface = new FlashInterface();
             registerInterfaceEvents(m_FlashInterface);
+			m_HxCppInterface = new Debugger.HxCpp.HxCppInterface();
+			registerInterfaceEvents(m_HxCppInterface);
+			SelectDebugger(DebuggerEngine.HxCpp);
         }
 
         private void registerInterfaceEvents(DebuggerInterface debugger)
@@ -68,6 +72,7 @@ namespace FlashDebugger
             debugger.WatchpointEvent += new DebuggerEventHandler(flashInterface_WatchpointEvent);
             debugger.UnknownHaltEvent += new DebuggerEventHandler(flashInterface_UnknownHaltEvent);
             debugger.ProgressEvent += new DebuggerProgressEventHandler(flashInterface_ProgressEvent);
+			debugger.TraceEvent += new TraceEventHandler(flashInterface_TraceEvent);
         }
 
         /*
@@ -96,10 +101,14 @@ namespace FlashDebugger
             {
                 m_Interface = m_FlashInterface;
             }
-            else
-            {
-                throw new Exception("UNIMPLEMENTED");
-            }
+			else if (debugger == DebuggerEngine.HxCpp)
+			{
+				m_Interface = m_HxCppInterface;
+			}
+			else
+			{
+				throw new Exception("UNIMPLEMENTED");
+			}
         }
 
 
@@ -154,7 +163,7 @@ namespace FlashDebugger
             if (!alwaysStart && !CheckCurrent()) return false;
             UpdateMenuState(DebuggerState.Starting);
 
-            m_FlashInterface.Initialize();
+			DebuggerInterface.Initialize();
 
             PluginBase.MainForm.ProgressBar.Visible = true;
             PluginBase.MainForm.ProgressLabel.Visible = true;
@@ -177,7 +186,7 @@ namespace FlashDebugger
         {
             try
             {
-                m_FlashInterface.Start();
+				DebuggerInterface.Start();
             }
             catch (Exception ex)
             {
@@ -193,12 +202,17 @@ namespace FlashDebugger
 
         #region Properties
 
-        public FlashInterface FlashInterface
-        {
-            get { return m_FlashInterface; }
-        }
+		public FlashInterface FlashInterface
+		{
+			get { return m_FlashInterface; }
+		}
 
-        public int CurrentFrame
+		public DebuggerInterface DebuggerInterface
+		{
+			get { return m_Interface; }
+		}
+
+		public int CurrentFrame
         {
             get { return m_CurrentFrame; }
             set
@@ -276,7 +290,49 @@ namespace FlashDebugger
 			return null;
         }
 
-        #endregion
+		/// <summary>
+		/// 
+		/// </summary>
+		public String GetLocalPath2(string file)
+		{
+			if (file == null) return null;
+			Char pathSeparator = Path.DirectorySeparatorChar;
+			file = file.Replace('/', pathSeparator);
+			if (File.Exists(file))
+			{
+				return file;
+			}
+			//if (m_PathMap.ContainsKey(file.getFullPath()))
+			//{
+			//	return m_PathMap[file.getFullPath()];
+			//}
+			//String pathFromPackage = file.getPackageName().ToString().Replace('/', pathSeparator);
+			//foreach (Folder folder in PluginMain.settingObject.SourcePaths)
+			//{
+			//	String localPath = folder.Path + pathSeparator + pathFromPackage + pathSeparator + file.getName();
+			//	if (File.Exists(localPath))
+			//	{
+			//		m_PathMap[file.getFullPath()] = localPath;
+			//		return localPath;
+			//	}
+			//}
+			Project project = PluginBase.CurrentProject as Project;
+			if (project != null)
+			{
+				foreach (string cp in project.Classpaths)
+				{
+					String localPath = project.Directory + pathSeparator + cp + pathSeparator + file;
+					if (File.Exists(localPath))
+					{
+						//m_PathMap[file.getFullPath()] = localPath;
+						return localPath;
+					}
+				}
+			}
+			return null;
+		}
+
+		#endregion
 
         #region FlashInterface Control
 
@@ -397,8 +453,8 @@ namespace FlashDebugger
 		{
             // force all breakpoints update after new as code loaded into debug movie 
             PluginMain.breakPointManager.ForceBreakPointUpdates();
-			m_FlashInterface.UpdateBreakpoints(PluginMain.breakPointManager.GetBreakPointUpdates());
-			m_FlashInterface.Continue();
+			m_Interface.UpdateBreakpoints(PluginMain.breakPointManager.GetBreakPointUpdates());
+			m_Interface.Continue();
 		}
 
         /// <summary>
@@ -440,9 +496,9 @@ namespace FlashDebugger
 			}
             try
             {
-                CurrentLocation = FlashInterface.getCurrentLocation();
-                UpdateStackUI();
-                UpdateLocalsUI();
+                //CurrentLocation = FlashInterface.getCurrentLocation();
+                //UpdateStackUI();
+                //UpdateLocalsUI();
                 UpdateMenuState(state);
                 (PluginBase.MainForm as Form).Activate();
             }
@@ -640,7 +696,7 @@ namespace FlashDebugger
 		/// </summary>
 		internal void Current_Click(Object sender, EventArgs e)
 		{
-			if (m_FlashInterface.isDebuggerStarted && m_FlashInterface.isDebuggerSuspended)
+			if (DebuggerInterface.IsDebuggerStarted && m_FlashInterface.IsDebuggerSuspended)
 			{
 				GotoCurrentLocation(false);
 			}
@@ -674,8 +730,8 @@ namespace FlashDebugger
             try
             {
 				CurrentLocation = null;
-				m_FlashInterface.UpdateBreakpoints(PluginMain.breakPointManager.GetBreakPointUpdates());
-				m_FlashInterface.Continue();
+				m_Interface.UpdateBreakpoints(PluginMain.breakPointManager.GetBreakPointUpdates());
+				m_Interface.Continue();
 				UpdateMenuState(DebuggerState.Running);
             }
             catch (Exception ex)
