@@ -137,7 +137,7 @@ namespace FlashDebugger
                     break;
                 
                 case EventType.UIClosing:
-                    if (debugManager.FlashInterface.isDebuggerStarted)
+					if (debugManager.DebuggerInterface.IsDebuggerStarted)
                     {
                         debugManager.FlashInterface.Detach();
                     }
@@ -190,14 +190,14 @@ namespace FlashDebugger
                             PanelsHelper.breakPointUI.Clear();
                         }
                     }
-                    else if (disableDebugger) return;
+//                    else if (disableDebugger) return;
 
                     if (buildevnt.Action == ProjectManager.ProjectManagerCommands.HotBuild
                         || buildevnt.Action == ProjectManager.ProjectManagerCommands.BuildProject)
                     {
-                        if (debugManager.FlashInterface.isDebuggerStarted)
+						if (debugManager.DebuggerInterface.IsDebuggerStarted)
                         {
-                            if (debugManager.FlashInterface.isDebuggerSuspended)
+							if (debugManager.DebuggerInterface.IsDebuggerSuspended)
                             {
                                 debugManager.Continue_Click(null, null);
                             }
@@ -207,9 +207,9 @@ namespace FlashDebugger
 
                     if (buildevnt.Action == ProjectManager.ProjectManagerEvents.TestProject)
                     {
-                        if (debugManager.FlashInterface.isDebuggerStarted)
+                        if (debugManager.DebuggerInterface.IsDebuggerStarted)
                         {
-                            if (debugManager.FlashInterface.isDebuggerSuspended)
+							if (debugManager.DebuggerInterface.IsDebuggerSuspended)
                             {
                                 debugManager.Continue_Click(null, null);
                                 e.Handled = true;
@@ -220,6 +220,7 @@ namespace FlashDebugger
                     
                     if (buildevnt.Action == ProjectManager.ProjectManagerEvents.TestProject)
                     {
+						debugManager.Start(true);
                         menusHelper.UpdateMenuState(this, DebuggerState.Initializing);
                     }
                     break;

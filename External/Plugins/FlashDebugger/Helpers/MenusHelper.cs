@@ -168,7 +168,7 @@ namespace FlashDebugger
         /// </summary>
         void StartContinue_Click(Object sender, EventArgs e)
         {
-            if (PluginMain.debugManager.FlashInterface.isDebuggerStarted)
+			if (PluginMain.debugManager.DebuggerInterface.IsDebuggerStarted)
             {
                 PluginMain.debugManager.Continue_Click(sender, e);
             }
@@ -180,7 +180,7 @@ namespace FlashDebugger
         /// </summary>
         void StartRemote_Click(Object sender, EventArgs e)
         {
-            if (PluginMain.debugManager.FlashInterface.isDebuggerStarted)
+			if (PluginMain.debugManager.DebuggerInterface.IsDebuggerStarted)
             {
                 PluginMain.debugManager.Continue_Click(sender, e);
             }

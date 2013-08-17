@@ -26,6 +26,15 @@ namespace FlashDebugger.Debugger
         event DebuggerProgressEventHandler ProgressEvent;
 
         bool Initialize();
+		void Start();
+
+		void Continue();
+		void Detach();
+
+		bool IsDebuggerStarted { get; }
+		bool IsDebuggerSuspended { get; }
+
+		void UpdateBreakpoints(List<BreakPointInfo> breakpoints);
 
     }
 }

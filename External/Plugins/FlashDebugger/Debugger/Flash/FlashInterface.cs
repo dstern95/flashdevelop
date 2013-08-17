@@ -32,7 +32,7 @@ namespace FlashDebugger.Debugger.Flash
 
 		#region Public Properties
 
-		public bool isDebuggerStarted
+		public bool IsDebuggerStarted
 		{
 			get
 			{
@@ -40,7 +40,7 @@ namespace FlashDebugger.Debugger.Flash
 			}
 		}
 
-		public bool isDebuggerSuspended
+		public bool IsDebuggerSuspended
 		{
 			get
 			{
@@ -461,7 +461,7 @@ namespace FlashDebugger.Debugger.Flash
             m_CurrentState = DebuggerState.Stopped;
         }
 
-		internal virtual void Detach()
+		public virtual void Detach()
 		{
 			m_RequestDetach = true;
 			m_SuspendWait.Set();
@@ -570,7 +570,6 @@ namespace FlashDebugger.Debugger.Flash
 				DebugEvent e = m_Session.nextEvent();
 				if (e is TraceEvent)
 				{
-					dumpTraceLine(e.information);
 					if (TraceEvent != null)
 					{
 						TraceEvent(this, e.information);
@@ -651,12 +650,6 @@ namespace FlashDebugger.Debugger.Flash
 				catch (System.Threading.ThreadInterruptedException){}
 				timeout -= period;
 			}
-		}
-
-		// pretty print a trace statement to the console
-		internal virtual void dumpTraceLine(String s)
-		{
-			TraceManager.AddAsync(s, 1);
 		}
 
 		// pretty print a fault statement to the console
@@ -753,7 +746,7 @@ namespace FlashDebugger.Debugger.Flash
 
 		public void Cleanup()
 		{
-			if (isDebuggerStarted)
+			if (IsDebuggerStarted)
 			{
 				Stop();
 			}
@@ -843,7 +836,7 @@ namespace FlashDebugger.Debugger.Flash
 			Dictionary<string, int> files = new Dictionary<string, int>();
 			foreach (BreakPointInfo bp in breakpoints)
 			{
-				if (bp.Location == null)
+				if (bp.InternalData == null)
 				{
 					if (!bp.IsDeleted && bp.IsEnabled)
 					{
@@ -888,13 +881,13 @@ namespace FlashDebugger.Debugger.Flash
 			}
 			foreach (BreakPointInfo bp in breakpoints)
 			{
-				if (bp.Location == null)
+				if (bp.InternalData == null)
 				{
 					if (bp.IsEnabled && !bp.IsDeleted)
 					{
 						if (files.ContainsKey(bp.FileFullPath) && files[bp.FileFullPath] != 0)
 						{
-							bp.Location = m_Session.setBreakpoint(files[bp.FileFullPath], bp.Line + 1);
+							bp.InternalData = m_Session.setBreakpoint(files[bp.FileFullPath], bp.Line + 1);
 						}
 					}
 				}
@@ -902,8 +895,8 @@ namespace FlashDebugger.Debugger.Flash
 				{
 					if (bp.IsDeleted || !bp.IsEnabled)
 					{
-						m_Session.clearBreakpoint(bp.Location);
-						bp.Location = null;
+						m_Session.clearBreakpoint((Location)bp.InternalData);
+						bp.InternalData = null;
 					}
 				}
 			}

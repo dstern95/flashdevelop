@@ -8,6 +8,7 @@ using FlashDebugger.Controls;
 using ScintillaNet;
 using PluginCore;
 using FlashDebugger.Debugger.Flash;
+using FlashDebugger.Debugger;
 
 namespace FlashDebugger
 {
@@ -67,8 +68,8 @@ namespace FlashDebugger
 		private void Manager_OnMouseHover(ScintillaControl sci, Int32 position)
 		{
 			DebuggerManager debugManager = PluginMain.debugManager;
-			FlashInterface flashInterface = debugManager.FlashInterface;
-			if (!PluginBase.MainForm.EditorMenu.Visible && flashInterface != null && flashInterface.isDebuggerStarted && flashInterface.isDebuggerSuspended)
+			FlashInterface debuggerInterface = debugManager.FlashInterface;
+			if (!PluginBase.MainForm.EditorMenu.Visible && debuggerInterface != null && debuggerInterface.IsDebuggerStarted && debuggerInterface.IsDebuggerSuspended)
 			{
 				if (debugManager.CurrentLocation != null && debugManager.CurrentLocation.getFile() != null)
 				{
@@ -93,7 +94,7 @@ namespace FlashDebugger
 					{
                         IASTBuilder b = new ASTBuilder(false);
                         ValueExp exp = b.parse(new java.io.StringReader(leftword));
-                        var ctx = new ExpressionContext(flashInterface.Session, flashInterface.Session.getFrames()[debugManager.CurrentFrame]);
+                        var ctx = new ExpressionContext(debuggerInterface.Session, debuggerInterface.Session.getFrames()[debugManager.CurrentFrame]);
                         var obj = exp.evaluate(ctx);
 						if ((Variable)obj != null)
 						{
