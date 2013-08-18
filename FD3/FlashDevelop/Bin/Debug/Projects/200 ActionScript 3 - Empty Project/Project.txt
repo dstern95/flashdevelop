@@ -1,1 +1,0 @@
-An empty project written in ActionScript 3 for Flash Player 9

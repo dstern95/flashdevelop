@@ -1,5 +1,0 @@
-try $(CSLB){
-	{0}$(EntryPoint)
-} $(CSLB)catch (err:Error) $(CSLB){
-	
-}
