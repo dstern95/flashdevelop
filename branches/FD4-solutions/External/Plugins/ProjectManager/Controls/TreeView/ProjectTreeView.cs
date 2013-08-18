@@ -163,7 +163,7 @@ namespace ProjectManager.Controls.TreeView
             get { return projects; }
             set
             {
-                projects = value ?? new List<Project>();
+                projects = value != null ? new List<Project>(value) : new List<Project>();
 
                 BeginUpdate();
                 try
@@ -173,7 +173,7 @@ namespace ProjectManager.Controls.TreeView
 
                     if (projects.Count > 0)
                     {
-                        Project = projects[0];
+                        //Project = projects[0];
                         ExpandedPaths = PluginMain.Settings.GetPrefs(projects[0]).ExpandedPaths;
                         Win32.Scrolling.SetScrollPos(this, new Point());
                     }
@@ -249,7 +249,7 @@ namespace ProjectManager.Controls.TreeView
 			get
 			{
                 List<string> expanded = new List<string>();
-				AddExpanded(Nodes,expanded); // add in the correct order - top-down
+				AddExpanded(Nodes, expanded); // add in the correct order - top-down
                 return expanded;
 			}
 			set
@@ -306,7 +306,7 @@ namespace ProjectManager.Controls.TreeView
                 SelectedNodes = null;
                 Nodes.Clear();
                 nodeMap.Clear();
-                ShowRootLines = false;
+                ShowRootLines = true;
 
                 if (projects.Count == 0)
                     return;
@@ -370,7 +370,6 @@ namespace ProjectManager.Controls.TreeView
                 cpNode = new ProjectClasspathNode(project, absolute, projectClasspath);
                 refs.Nodes.Add(cpNode);
                 cpNode.Refresh(true);
-                ShowRootLines = true;
             }
 
             foreach (string globalClasspath in globalClasspaths)
@@ -384,7 +383,6 @@ namespace ProjectManager.Controls.TreeView
                 cpNode = new ClasspathNode(project, absolute, globalClasspath);
                 refs.Nodes.Add(cpNode);
                 cpNode.Refresh(true);
-                ShowRootLines = true;
             }
 
             // add external libraries at the top level also
@@ -418,7 +416,6 @@ namespace ProjectManager.Controls.TreeView
                         SwfFileNode swcNode = new SwfFileNode(absolute);
                         refs.Nodes.Add(swcNode);
                         swcNode.Refresh(true);
-                        ShowRootLines = true;
                     }
                 }
         }
