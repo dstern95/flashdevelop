@@ -15,6 +15,7 @@ using ProjectManager.Projects;
 using PluginCore.Localization;
 using PluginCore.Managers;
 using PluginCore;
+using System.Collections.Generic;
 
 namespace ProjectManager
 {
@@ -130,10 +131,11 @@ namespace ProjectManager
 
             this.project = project;
 
-            //tree.Projects.Clear();
-            if (project != null) tree.Projects.Add(project);
-            else tree.Projects.Clear();
-            tree.Projects = tree.Projects;
+            List<Project> projects = tree.Projects;
+            //projects.Clear(); // only one project active
+            if (project != null) projects.Add(project);
+            else projects.Clear();
+            tree.Projects = projects;
             tree.Project = project;
             tree_AfterSelect(tree, null);
 
