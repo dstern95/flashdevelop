@@ -147,6 +147,7 @@
     <Compile Include="Debugger\HxCpp\Server\MessageUtil.cs" />
     <Compile Include="Debugger\HxCpp\Server\Protocol.cs" />
     <Compile Include="Debugger\HxCpp\Server\Session.cs" />
+    <Compile Include="Debugger\SourceFile.cs" />
     <Compile Include="Debugger\VariableFacade.cs" />
     <Compile Include="Debugger\Flash\FlashDataNode.cs" />
     <Compile Include="Debugger\Flash\FlashInterface.cs" />

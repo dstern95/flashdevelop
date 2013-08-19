@@ -11,6 +11,8 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 	/// </summary>
 	class Manager
 	{
+		public event DebuggerProgressEventHandler ProgressEvent;
+
 		private Socket listenSocket;
 
 		public void Listen()
@@ -26,20 +28,32 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
 		public Session Accept()
 		{
-			if (listenSocket.Poll(5000000, SelectMode.SelectRead))
+			int timeout = 30000000;
+			int period = 1000000;
+			int done = 0;
+			while (timeout > done)
 			{
-				Socket cli = listenSocket.Accept();
-				PluginCore.Managers.TraceManager.AddAsync("Accepted", -1);
-				Session sess = new Session(cli);
+				done += period;
+				if (ProgressEvent != null) ProgressEvent(this, done, timeout);
+				if (listenSocket.Poll(period, SelectMode.SelectRead))
+				{
+					Socket cli = listenSocket.Accept();
+					PluginCore.Managers.TraceManager.AddAsync("Accepted", -1);
+					Session sess = new Session(cli);
 
-				return sess;
+					return sess;
+				}
 			}
-			throw new Exception("TIMEOUT");
+			throw new ManagerAcceptTimeoutExceptio();
 		}
 
 		public void StopListen()
 		{
 			listenSocket.Close();
 		}
+	}
+
+	class ManagerAcceptTimeoutExceptio : Exception
+	{
 	}
 }

@@ -30,6 +30,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			try
 			{
 				socket.ReceiveTimeout = 5000;
+				socket.SendBufferSize = 5000;
 				PluginCore.Managers.TraceManager.AddAsync("Sending ServerID", -1);
 				Protocol.WriteServerIdentification(socket);
 				PluginCore.Managers.TraceManager.AddAsync("Reading ClientID", -1);
@@ -60,6 +61,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 		{
 			int cmdId = Interlocked.Increment(ref nextCmdId);
 			
+			// write timeout?
 			Protocol.WriteCommand(socket, Command.CommandId(cmdId, cmd));
 
 			// wait w/ timeout

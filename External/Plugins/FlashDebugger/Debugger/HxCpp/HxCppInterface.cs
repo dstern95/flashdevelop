@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using FlashDebugger.Debugger.HxCpp.Server;
+using PluginCore.Managers;
 
 namespace FlashDebugger.Debugger.HxCpp
 {
@@ -38,32 +39,54 @@ namespace FlashDebugger.Debugger.HxCpp
 		public bool Initialize()
 		{
 			manager = new Manager();
+			manager.ProgressEvent += new DebuggerProgressEventHandler(manager_ProgressEvent);
 			return true;
 		}
 
 		public void Start()
 		{
-			manager.Listen();
-			session = manager.Accept();
-			session.Bind();
-			manager.StopListen();
-
-			isSuspended = false;
-
-			if (StartedEvent != null) { StartedEvent(this); };
-			// send some events
-			// test
-
-			while (true)
+			try
 			{
-				handleEvents();
-				if (!session.Connected)
+				manager.Listen();
+				session = manager.Accept();
+				session.Bind();
+				manager.StopListen();
+
+				isSuspended = false;
+
+				if (StartedEvent != null) { StartedEvent(this); };
+				// send some events
+				// test
+
+				while (true)
 				{
-					break;
+					handleEvents();
+					if (!session.Connected)
+					{
+						break;
+					}
+
+					// sleep for a bit, then process our events.
+					try
+					{
+						System.Threading.Thread.Sleep(25);
+					}
+					catch { }
 				}
 			}
+			catch (ManagerAcceptTimeoutExceptio mate)
+			{
+				TraceManager.AddAsync("[No debugger connection request]", -1);
+			}
+			finally
+			{
+				if (DisconnectedEvent != null) { DisconnectedEvent(this); }
+			}
+		}
 
-			if (DisconnectedEvent != null) { DisconnectedEvent(this); }
+		void manager_ProgressEvent(object sender, int current, int total)
+		{
+			if (ProgressEvent != null) ProgressEvent(this, current, total);
 		}
 
 		private void handleEvents()
@@ -151,6 +174,22 @@ namespace FlashDebugger.Debugger.HxCpp
 			// delete old ones
 		}
 
+
+
+		public void Next()
+		{
+			session.Request(Command.Next(1));
+		}
+
+		public void Step()
+		{
+			throw new NotImplementedException();
+		}
+
+		public void Pause()
+		{
+			throw new NotImplementedException();
+		}
 
 	}
 }
