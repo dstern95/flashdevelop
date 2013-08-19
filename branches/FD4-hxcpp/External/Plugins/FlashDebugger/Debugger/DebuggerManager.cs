@@ -537,7 +537,32 @@ namespace FlashDebugger
 				Variable thisValue = m_FlashInterface.GetThis(m_CurrentFrame);
 				Variable[] args = m_FlashInterface.GetArgs(m_CurrentFrame);
 				Variable[] locals = m_FlashInterface.GetLocals(m_CurrentFrame);
+				int count = 0;
+				int i = 0;
+				if (thisValue != null) count +=1;
+				if (args != null) count += args.Length;
+				if (locals != null) count += locals.Length;
+				Variable[] all = new Variable[count];
+				if (thisValue != null) 
+				{
+					all[0] = thisValue;
+					i++;
+				}
+				if (args != null)
+				{
+					args.CopyTo(all, i);
+					i += args.Length;
+				}
+				if (locals != null)
+				{
+					locals.CopyTo(all, i);
+				}
 				PanelsHelper.pluginUI.Clear();
+				if (all.Length > 0)
+				{
+					PanelsHelper.pluginUI.SetData(all);
+				}
+				/*
 				if (thisValue != null)
 				{
 					PanelsHelper.pluginUI.SetData(new Variable[] { thisValue });
@@ -550,6 +575,7 @@ namespace FlashDebugger
 				{
 					PanelsHelper.pluginUI.SetData(locals);
 				}
+				*/
 				CurrentLocation = frames[m_CurrentFrame].getLocation();
 				PanelsHelper.watchUI.UpdateElements();
 			}
@@ -708,7 +734,7 @@ namespace FlashDebugger
         internal void Next_Click(Object sender, EventArgs e)
         {
 			CurrentLocation = null;
-			m_FlashInterface.Next();
+			m_Interface.Next();
 			UpdateMenuState(DebuggerState.Running);
 		}
 
@@ -718,7 +744,7 @@ namespace FlashDebugger
         internal void Step_Click(Object sender, EventArgs e)
         {
 			CurrentLocation = null;
-			m_FlashInterface.Step();
+			m_Interface.Step();
 			UpdateMenuState(DebuggerState.Running);
         }
 

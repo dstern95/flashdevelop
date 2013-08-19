@@ -28,6 +28,15 @@ namespace FlashDebugger.Debugger
         bool Initialize();
 		void Start();
 
+		/// <summary>
+		/// Step Over
+		/// </summary>
+		void Next();
+		/// <summary>
+		/// Step Intp
+		/// </summary>
+		void Step();
+		void Pause();
 		void Continue();
 		void Detach();
 
