@@ -14,20 +14,31 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 		public event DebuggerProgressEventHandler ProgressEvent;
 
 		private Socket listenSocket;
+		private bool 
 
 		public void Listen()
 		{
-			// need to broadcast some sort of progress evetn
-			// ProgressChangedEventArgs  ProgressChangedEventHandler
-			listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Unspecified);
-			EndPoint ep = new IPEndPoint(IPAddress.Any, 6972);
-			listenSocket.Bind(ep);
-			listenSocket.Listen(1); // just 1 for now
-			PluginCore.Managers.TraceManager.AddAsync("Listening", -1);
+			try
+			{
+				listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Unspecified);
+				EndPoint ep = new IPEndPoint(IPAddress.Any, 6972);
+				listenSocket.Bind(ep);
+				listenSocket.Listen(1); // just 1 for now
+				PluginCore.Managers.TraceManager.AddAsync("Listening", -1);
+			}
+			catch (Exception ex)
+			{
+				listenSocket.Close();
+				listenSocket = null;
+			}
 		}
 
 		public Session Accept()
 		{
+			if (listenSocket == null)
+			{
+				throw new Exception("Not listening");
+			}
 			int timeout = 30000000;
 			int period = 1000000;
 			int done = 0;
@@ -50,6 +61,12 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 		public void StopListen()
 		{
 			listenSocket.Close();
+			listenSocket = null;
+		}
+
+		public bool Listening
+		{
+			get { return listenSocket != null; }
 		}
 	}
 

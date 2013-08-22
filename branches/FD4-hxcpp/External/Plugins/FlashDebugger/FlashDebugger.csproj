@@ -135,9 +135,14 @@
     <Compile Include="Controls\ViewerForm.Designer.cs">
       <DependentUpon>ViewerForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Debugger\DbgLocation.cs" />
     <Compile Include="Debugger\DebuggerInterface.cs" />
     <Compile Include="Debugger\DebuggerManager.cs" />
     <Compile Include="Debugger\ExpressionContext.cs" />
+    <Compile Include="Debugger\Flash\FlashLocation.cs" />
+    <Compile Include="Debugger\Flash\FlashSourceFile.cs" />
+    <Compile Include="Debugger\HxCpp\HxCppLocation.cs" />
+    <Compile Include="Debugger\HxCpp\HxCppSourceFile.cs" />
     <Compile Include="Debugger\HxCpp\Server\Command.cs" />
     <Compile Include="Debugger\HxCpp\HaxeDeserializer.cs" />
     <Compile Include="Debugger\HxCpp\HaxeSerializer.cs" />
@@ -147,7 +152,7 @@
     <Compile Include="Debugger\HxCpp\Server\MessageUtil.cs" />
     <Compile Include="Debugger\HxCpp\Server\Protocol.cs" />
     <Compile Include="Debugger\HxCpp\Server\Session.cs" />
-    <Compile Include="Debugger\SourceFile.cs" />
+    <Compile Include="Debugger\DbgSourceFile.cs" />
     <Compile Include="Debugger\VariableFacade.cs" />
     <Compile Include="Debugger\Flash\FlashDataNode.cs" />
     <Compile Include="Debugger\Flash\FlashInterface.cs" />

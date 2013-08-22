@@ -31,11 +31,11 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			{
 				socket.ReceiveTimeout = 5000;
 				socket.SendBufferSize = 5000;
-				PluginCore.Managers.TraceManager.AddAsync("Sending ServerID", -1);
+				log("Sending ServerID");
 				Protocol.WriteServerIdentification(socket);
-				PluginCore.Managers.TraceManager.AddAsync("Reading ClientID", -1);
+				log("Reading ClientID");
 				Protocol.ReadClientIdentification(socket);
-				PluginCore.Managers.TraceManager.AddAsync("Read ClientID", -1);
+				log("Read ClientID");
 				readWorker = new BackgroundWorker();
 				readWorker.DoWork += new DoWorkEventHandler(readWorker_DoWork);
 				readWorker.RunWorkerAsync();
@@ -46,13 +46,13 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			}
 			catch (Exception e)
 			{
-				PluginCore.Managers.TraceManager.AddAsync("Bind e " + e.ToString(), -1);
+				log("Bind e " + e.ToString());
 			}
 		}
 
 		public void Unbind()
 		{
-			PluginCore.Managers.TraceManager.AddAsync("Unbind", -1);
+			log("Unbind");
 			socket.Close();
 		}
 
@@ -112,13 +112,23 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
 		void readWorker_DoWork(object sender, DoWorkEventArgs e)
 		{
-			PluginCore.Managers.TraceManager.AddAsync("DoWork", -1);
+			log("DoWork");
 			socket.ReceiveTimeout = 0;
 
 			while (socket.Connected)
 			{
 				try
 				{
+					socket.Poll(-1, SelectMode.SelectRead);
+					if (!socket.Connected)
+					{
+						// disconnected
+						lock (eventQ)
+						{
+							eventQ.Enqueue(null);
+						}
+						break;
+					}
 					HaxeEnum henum = Protocol.ReadMessage(socket);
 					Message msg = Message.FromEnum(henum);
 					// transalte HaxeEnum into a sane structure! get message id from it!
@@ -127,7 +137,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 						lock (responseQ)
 						{
 							Message.MessageId msg_id = (Message.MessageId)msg;
-							PluginCore.Managers.TraceManager.AddAsync("msg " + msg_id.id + ": " + msg_id.message.ToString(), -1);
+							log("msg " + msg_id.id + ": " + msg_id.message.ToString());
 							responseQ.Add(msg_id.id, msg_id.message);
 						}
 					}
@@ -135,7 +145,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 					{
 						lock (eventQ)
 						{
-							PluginCore.Managers.TraceManager.AddAsync("evt " + msg.ToString(), -1);
+							log("evt " + msg.ToString());
 							eventQ.Enqueue(msg);
 						}
 					}
@@ -143,7 +153,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 				catch (Exception exc)
 				{
 					// stop?
-					PluginCore.Managers.TraceManager.AddAsync("DoWork exception " + exc.ToString(), -1);
+					log("DoWork exception " + exc.ToString());
 					lock (eventQ)
 					{
 						// singnal end
@@ -152,7 +162,16 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 					return;
 				}
 			}
-			PluginCore.Managers.TraceManager.AddAsync("DoWork end", -1);
+			log("DoWork end");
+		}
+
+
+		private static void log(string text)
+		{
+			if (PluginMain.settingObject.VerboseOutput)
+			{
+				PluginCore.Managers.TraceManager.AddAsync("Session: " + text, -1);
+			}
 		}
 	}
 }

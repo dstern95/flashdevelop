@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using flash.tools.debugger;
+using FlashDebugger.Debugger;
 
 namespace FlashDebugger
 {
@@ -99,7 +100,7 @@ namespace FlashDebugger
 			{
 				if (PluginMain.debugManager.CurrentFrame == lv.SelectedIndices[0])
 				{
-					Location tmp = PluginMain.debugManager.CurrentLocation;
+					DbgLocation tmp = PluginMain.debugManager.CurrentLocation;
 					PluginMain.debugManager.CurrentLocation = null;
 					PluginMain.debugManager.CurrentLocation = tmp;
 				}

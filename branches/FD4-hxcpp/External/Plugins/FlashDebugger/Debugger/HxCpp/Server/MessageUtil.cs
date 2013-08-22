@@ -16,5 +16,27 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			}
 			return ret;
 		}
+
+		static public List<ThreadWhereList.Where> ToList(ThreadWhereList list)
+		{
+			List<ThreadWhereList.Where> ret = new List<ThreadWhereList.Where>();
+			while (list is ThreadWhereList.Where)
+			{
+				ret.Add((ThreadWhereList.Where)list);
+				list = ((ThreadWhereList.Where)list).next;
+			}
+			return ret;
+		}
+
+		static public List<FrameList.Frame> ToList(FrameList list)
+		{
+			List<FrameList.Frame> ret = new List<FrameList.Frame>();
+			while (list is FrameList.Frame)
+			{
+				ret.Add((FrameList.Frame)list);
+				list = ((FrameList.Frame)list).next;
+			}
+			return ret;
+		}
 	}
 }

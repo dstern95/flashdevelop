@@ -39,11 +39,14 @@ namespace FlashDebugger.Debugger
 		void Pause();
 		void Continue();
 		void Detach();
+		void Stop();
 
 		bool IsDebuggerStarted { get; }
 		bool IsDebuggerSuspended { get; }
 
 		void UpdateBreakpoints(List<BreakPointInfo> breakpoints);
+
+		DbgLocation CurrentLocation { get; }
 
     }
 }
