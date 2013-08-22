@@ -712,20 +712,23 @@ namespace FlashDebugger.Debugger.Flash
 			TraceManager.AddAsync(sb.ToString());
 		}
 
-		internal virtual Location getCurrentLocation()
+		public DbgLocation CurrentLocation
 		{
-			Location where = null;
-			try
+			get
 			{
-				Frame[] frames = m_Session.getFrames();
+				Location where = null;
+				try
+				{
+					Frame[] frames = m_Session.getFrames();
 
-				where = frames.Length > 0 ? frames[0].getLocation() : null;
+					where = frames.Length > 0 ? frames[0].getLocation() : null;
+				}
+				catch (PlayerDebugException)
+				{
+					// where == null
+				}
+				return FlashLocation.FromLocation(where);
 			}
-			catch (PlayerDebugException)
-			{
-				// where == null
-			}
-			return where;
 		}
 
 		public void Stop()
@@ -860,7 +863,7 @@ namespace FlashDebugger.Debugger.Flash
 					{
 						foreach (SourceFile src in swf.getSourceList(m_Session))
 						{
-							String localPath = PluginMain.debugManager.GetLocalPath(src);
+							String localPath = FlashSourceFile.FromSourceFile(src).LocalPath;
 							if (localPath != null && files.ContainsKey(localPath) && files[localPath] == 0)
 							{
 								files[localPath] = src.getId();

@@ -10,6 +10,7 @@ using PluginCore.Utilities;
 using PluginCore.Managers;
 using ScintillaNet;
 using PluginCore;
+using FlashDebugger.Debugger;
 
 namespace FlashDebugger
 {
@@ -132,9 +133,9 @@ namespace FlashDebugger
 			return index;
 		}
 
-		public Boolean ShouldBreak(SourceFile file, int line)
+		public Boolean ShouldBreak(DbgSourceFile file, int line)
 		{
-			String localPath = PluginMain.debugManager.GetLocalPath(file);
+			String localPath = file.LocalPath;
 			if (localPath == null)
 			{
 				return false;

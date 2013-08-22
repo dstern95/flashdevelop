@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using FlashDebugger.Debugger.HxCpp.Server;
 using PluginCore.Managers;
+using System.Net.Sockets;
 
 namespace FlashDebugger.Debugger.HxCpp
 {
@@ -78,9 +79,23 @@ namespace FlashDebugger.Debugger.HxCpp
 			{
 				TraceManager.AddAsync("[No debugger connection request]", -1);
 			}
+			catch (SocketException se)
+			{
+				// if we requested stop, it's ok, otherwise ...
+				if (session != null) throw se;
+			}
 			finally
 			{
 				if (DisconnectedEvent != null) { DisconnectedEvent(this); }
+				if (manager.Listening)
+				{
+					manager.StopListen();
+				}
+				if (session != null && session.Connected)
+				{
+					session.Unbind();
+				}
+				session = null;
 			}
 		}
 
@@ -120,7 +135,7 @@ namespace FlashDebugger.Debugger.HxCpp
 
 		public void Detach()
 		{
-			throw new NotImplementedException();
+			session.Request(Command.Detach());
 		}
 
 		public bool IsDebuggerStarted
@@ -140,7 +155,7 @@ namespace FlashDebugger.Debugger.HxCpp
 			Dictionary<string, string> map = new Dictionary<string, string>(fres.Count);
 			foreach (string f in fres)
 			{
-				String localPath = PluginMain.debugManager.GetLocalPath2(f);
+				String localPath = HxCppSourceFile.FromString(f).LocalPath;
 				map.Add(localPath, f);
 			}
 
@@ -170,11 +185,7 @@ namespace FlashDebugger.Debugger.HxCpp
 					}
 				}
 			}
-
-			// delete old ones
 		}
-
-
 
 		public void Next()
 		{
@@ -183,13 +194,43 @@ namespace FlashDebugger.Debugger.HxCpp
 
 		public void Step()
 		{
-			throw new NotImplementedException();
+			session.Request(Command.Step(1));
 		}
 
 		public void Pause()
 		{
-			throw new NotImplementedException();
+			session.Request(Command.BreakNow());
 		}
 
+		public void Stop()
+		{
+			if (manager.Listening)
+			{
+				manager.StopListen();
+			}
+			else
+			{
+				session.Request(Command.Exit());
+			}
+		}
+
+		public DbgLocation CurrentLocation
+		{
+			get
+			{
+				try
+				{
+					// todo, cache this
+					Message.ThreadsWhere msg = (Message.ThreadsWhere)session.Request(Command.WhereCurrentThread(false));
+					List<ThreadWhereList.Where> tl = MessageUtil.ToList(msg.list);
+					List<FrameList.Frame> fl = MessageUtil.ToList(tl[0].frameList);
+					return HxCppLocation.FromFrame(fl[0]);
+				}
+				catch (Exception ex)
+				{
+					return null;
+				}
+			}
+		}
 	}
 }

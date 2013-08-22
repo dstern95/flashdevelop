@@ -220,9 +220,9 @@ namespace FlashDebugger
                     
                     if (buildevnt.Action == ProjectManager.ProjectManagerEvents.TestProject)
                     {
-						debugManager.Start(true);
                         menusHelper.UpdateMenuState(this, DebuggerState.Initializing);
-                    }
+						debugManager.Start(true);
+					}
                     break;
             }
         }

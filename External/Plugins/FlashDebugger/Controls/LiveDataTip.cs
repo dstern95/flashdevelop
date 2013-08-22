@@ -71,9 +71,9 @@ namespace FlashDebugger
 			FlashInterface debuggerInterface = debugManager.FlashInterface;
 			if (!PluginBase.MainForm.EditorMenu.Visible && debuggerInterface != null && debuggerInterface.IsDebuggerStarted && debuggerInterface.IsDebuggerSuspended)
 			{
-				if (debugManager.CurrentLocation != null && debugManager.CurrentLocation.getFile() != null)
+				if (debugManager.CurrentLocation != null && debugManager.CurrentLocation.File != null)
 				{
-					String localPath = debugManager.GetLocalPath(debugManager.CurrentLocation.getFile());
+					String localPath = debugManager.CurrentLocation.File.LocalPath;
 					if (localPath == null || localPath != PluginBase.MainForm.CurrentDocument.FileName)
 					{
 						return;
