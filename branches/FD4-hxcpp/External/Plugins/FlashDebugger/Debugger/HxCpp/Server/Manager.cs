@@ -14,7 +14,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 		public event DebuggerProgressEventHandler ProgressEvent;
 
 		private Socket listenSocket;
-		private bool 
+		private bool listening;
 
 		public void Listen()
 		{
@@ -24,6 +24,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 				EndPoint ep = new IPEndPoint(IPAddress.Any, 6972);
 				listenSocket.Bind(ep);
 				listenSocket.Listen(1); // just 1 for now
+				listening = true;
 				PluginCore.Managers.TraceManager.AddAsync("Listening", -1);
 			}
 			catch (Exception ex)
@@ -46,6 +47,11 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			{
 				done += period;
 				if (ProgressEvent != null) ProgressEvent(this, done, timeout);
+				if (!listening)
+				{
+					// todo, use some other excpetions
+					throw new ManagerAcceptTimeoutExceptio();
+				}
 				if (listenSocket.Poll(period, SelectMode.SelectRead))
 				{
 					Socket cli = listenSocket.Accept();
@@ -62,11 +68,12 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 		{
 			listenSocket.Close();
 			listenSocket = null;
+			listening = false;
 		}
 
 		public bool Listening
 		{
-			get { return listenSocket != null; }
+			get { return listening; }
 		}
 	}
 
