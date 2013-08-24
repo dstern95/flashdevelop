@@ -332,7 +332,7 @@ namespace FlashDebugger
         /// </summary>
         private void flashInterface_BreakpointEvent(object sender)
 		{
-			DbgLocation loc = DebuggerInterface.CurrentLocation;
+			DbgLocation loc = DebuggerInterface.GetCurrentLocation();
 			if (PluginMain.breakPointManager.ShouldBreak(loc.File, loc.Line))
 			{
 				UpdateUI(DebuggerState.BreakHalt);
@@ -409,8 +409,8 @@ namespace FlashDebugger
 			}
             try
             {
-                CurrentLocation = DebuggerInterface.CurrentLocation;
-                //UpdateStackUI();
+                CurrentLocation = DebuggerInterface.GetCurrentLocation();
+                UpdateStackUI();
                 //UpdateLocalsUI();
                 UpdateMenuState(state);
                 (PluginBase.MainForm as Form).Activate();
@@ -427,7 +427,7 @@ namespace FlashDebugger
         private void UpdateStackUI()
 		{
 			m_CurrentFrame = 0;
-			Frame[] frames = m_FlashInterface.GetFrames();
+			DbgFrame[] frames = m_Interface.GetFrames();
 			PanelsHelper.stackframeUI.AddFrames(frames);
 		}
 
@@ -444,12 +444,12 @@ namespace FlashDebugger
 				});
 				return;
 			}
-			Frame[] frames = m_FlashInterface.GetFrames();
+			DbgFrame[] frames = m_Interface.GetFrames();
             if (frames != null && m_CurrentFrame < frames.Length)
 			{
-				Variable thisValue = m_FlashInterface.GetThis(m_CurrentFrame);
-				Variable[] args = m_FlashInterface.GetArgs(m_CurrentFrame);
-				Variable[] locals = m_FlashInterface.GetLocals(m_CurrentFrame);
+				Variable thisValue = null;// m_FlashInterface.GetThis(m_CurrentFrame);
+				Variable[] args = null;// m_FlashInterface.GetArgs(m_CurrentFrame);
+				Variable[] locals = null;// m_FlashInterface.GetLocals(m_CurrentFrame);
 				int count = 0;
 				int i = 0;
 				if (thisValue != null) count +=1;
@@ -475,7 +475,7 @@ namespace FlashDebugger
 				{
 					PanelsHelper.pluginUI.SetData(all);
 				}
-				CurrentLocation = FlashLocation.FromLocation(frames[m_CurrentFrame].getLocation());
+				CurrentLocation = frames[m_CurrentFrame].Location;
 				PanelsHelper.watchUI.UpdateElements();
 			}
 			else CurrentLocation = null;

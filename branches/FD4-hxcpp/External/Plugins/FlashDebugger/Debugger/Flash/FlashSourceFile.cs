@@ -23,12 +23,22 @@ namespace FlashDebugger.Debugger.Flash
 			this.sourceFile = sourceFile;
 		}
 
-		string DbgSourceFile.LocalPath
+		public string FullPath
+		{
+			get { return sourceFile.getFullPath(); }
+		}
+
+		public string LocalPath
 		{
 			get
 			{
 				return getLocalPath(sourceFile);
 			}
+		}
+
+		public override string ToString()
+		{
+			return sourceFile.ToString();
 		}
 
 		/// <summary>

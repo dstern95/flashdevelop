@@ -67,15 +67,15 @@ namespace FlashDebugger
 			lv.SelectedItems[0].ImageIndex = currentImageIndex;
 		}
 
-        public void AddFrames(Frame[] frames)
+        public void AddFrames(DbgFrame[] frames)
         {
             lv.Items.Clear();
-            if (frames.GetLength(0) > 0)
+            if (frames.Length > 0)
             {
-                foreach (Frame item in frames)
+                foreach (DbgFrame item in frames)
                 {
-					String title = item.getCallSignature();
-                    if (item.getLocation().getFile() != null) title += " at " + item.getLocation().getFile() + ":" + item.getLocation().getLine();
+					String title = item.CallSignature;
+                    if (item.Location.File != null) title += " at " + item.Location.File + ":" + item.Location.Line;
                     lv.Items.Add(new ListViewItem(new string[] {"", title}, -1));
                 }
 				lv.Items[0].ImageIndex = currentImageIndex;

@@ -46,7 +46,9 @@ namespace FlashDebugger.Debugger
 
 		void UpdateBreakpoints(List<BreakPointInfo> breakpoints);
 
-		DbgLocation CurrentLocation { get; }
+		DbgLocation GetCurrentLocation();
+
+		DbgFrame[] GetFrames();
 
     }
 }

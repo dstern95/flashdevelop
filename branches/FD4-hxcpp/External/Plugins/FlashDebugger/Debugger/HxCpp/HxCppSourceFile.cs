@@ -28,9 +28,19 @@ namespace FlashDebugger.Debugger.HxCpp
 			this.file = file;
 		}
 
+		public string FullPath
+		{
+			get { return file; }
+		}
+
 		public string LocalPath
 		{
 			get { return getLocalPath(file); }
+		}
+
+		public override string ToString()
+		{
+			return FullPath;
 		}
 
 		private static string getLocalPath(string file)
