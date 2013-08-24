@@ -16,6 +16,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 		private BackgroundWorker readWorker;
 		private Dictionary<int, Message> responseQ;
 		private Queue<Message> eventQ;
+		private AutoResetEvent responseWaitHandle = new AutoResetEvent(false);
 		int nextCmdId = 1;
 
 		public Session(Socket socket)
@@ -64,10 +65,9 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			// write timeout?
 			Protocol.WriteCommand(socket, Command.CommandId(cmdId, cmd));
 
-			// wait w/ timeout
 			int timeout = 5000;
-			int period = 500;
-			while (timeout > 0)
+			bool pass2 = false;
+			while (true)
 			{
 				lock (responseQ)
 				{
@@ -75,15 +75,16 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 					{
 						Message res = responseQ[cmdId];
 						responseQ.Remove(cmdId);
+						responseWaitHandle.Reset();
 						return res;
 					}
 				}
-				try
+				if (pass2)
 				{
-					System.Threading.Thread.Sleep(period);
+					break;
 				}
-				catch (System.Threading.ThreadInterruptedException) { }
-				timeout -= period;
+				responseWaitHandle.WaitOne(timeout);
+				pass2 = true;
 			}
 			throw new Exception("No reponse in time");
 		}
@@ -139,6 +140,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 							Message.MessageId msg_id = (Message.MessageId)msg;
 							log("msg " + msg_id.id + ": " + msg_id.message.ToString());
 							responseQ.Add(msg_id.id, msg_id.message);
+							responseWaitHandle.Set();
 						}
 					}
 					else
