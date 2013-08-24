@@ -712,23 +712,20 @@ namespace FlashDebugger.Debugger.Flash
 			TraceManager.AddAsync(sb.ToString());
 		}
 
-		public DbgLocation CurrentLocation
+		public DbgLocation GetCurrentLocation()
 		{
-			get
+			Location where = null;
+			try
 			{
-				Location where = null;
-				try
-				{
-					Frame[] frames = m_Session.getFrames();
+				Frame[] frames = m_Session.getFrames();
 
-					where = frames.Length > 0 ? frames[0].getLocation() : null;
-				}
-				catch (PlayerDebugException)
-				{
-					// where == null
-				}
-				return FlashLocation.FromLocation(where);
+				where = frames.Length > 0 ? frames[0].getLocation() : null;
 			}
+			catch (PlayerDebugException)
+			{
+				// where == null
+			}
+			return FlashLocation.FromLocation(where);
 		}
 
 		public void Stop()
@@ -809,9 +806,15 @@ namespace FlashDebugger.Debugger.Flash
 			}
 		}
 
-		public Frame[] GetFrames()
+		public DbgFrame[] GetFrames()
 		{
-			return m_Session.getFrames();
+			Frame[] frames =  m_Session.getFrames();
+			DbgFrame[] ret = new DbgFrame[frames.Length];
+			for (int i = 0; i < frames.Length; i++)
+			{
+				ret[i] = FlashFrame.FromFrame(frames[i]);
+			}
+			return ret;
 		}
 
 		public Variable[] GetArgs(int frameNumber)

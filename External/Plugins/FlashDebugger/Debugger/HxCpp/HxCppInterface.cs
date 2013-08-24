@@ -82,6 +82,7 @@ namespace FlashDebugger.Debugger.HxCpp
 			catch (SocketException se)
 			{
 				// if we requested stop, it's ok, otherwise ...
+				// this is not true!
 				if (session != null) throw se;
 			}
 			finally
@@ -214,22 +215,41 @@ namespace FlashDebugger.Debugger.HxCpp
 			}
 		}
 
-		public DbgLocation CurrentLocation
+		public DbgLocation GetCurrentLocation()
 		{
-			get
+			try
 			{
-				try
+				// todo, cache this
+				Message.ThreadsWhere msg = (Message.ThreadsWhere)session.Request(Command.WhereCurrentThread(false));
+				List<ThreadWhereList.Where> tl = MessageUtil.ToList(msg.list);
+				List<FrameList.Frame> fl = MessageUtil.ToList(tl[0].frameList);
+				return HxCppLocation.FromFrame(fl[0]);
+			}
+			catch (Exception ex)
+			{
+				throw;
+				//return null;
+			}
+		}
+
+		public DbgFrame[] GetFrames()
+		{
+			try
+			{
+				Message.ThreadsWhere msg = (Message.ThreadsWhere)session.Request(Command.WhereCurrentThread(false));
+				List<ThreadWhereList.Where> tl = MessageUtil.ToList(msg.list);
+				List<FrameList.Frame> fl = MessageUtil.ToList(tl[0].frameList);
+				DbgFrame[] ret = new DbgFrame[fl.Count];
+				for (int i=0; i<fl.Count; i++)
 				{
-					// todo, cache this
-					Message.ThreadsWhere msg = (Message.ThreadsWhere)session.Request(Command.WhereCurrentThread(false));
-					List<ThreadWhereList.Where> tl = MessageUtil.ToList(msg.list);
-					List<FrameList.Frame> fl = MessageUtil.ToList(tl[0].frameList);
-					return HxCppLocation.FromFrame(fl[0]);
+					ret[i] = HxCppFrame.FromFrame(fl[i]);
 				}
-				catch (Exception ex)
-				{
-					return null;
-				}
+				return ret;
+			}
+			catch (Exception ex)
+			{
+				throw;
+				//return null;
 			}
 		}
 	}

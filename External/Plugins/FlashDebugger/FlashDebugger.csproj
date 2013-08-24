@@ -135,12 +135,15 @@
     <Compile Include="Controls\ViewerForm.Designer.cs">
       <DependentUpon>ViewerForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Debugger\DbgFrame.cs" />
     <Compile Include="Debugger\DbgLocation.cs" />
     <Compile Include="Debugger\DebuggerInterface.cs" />
     <Compile Include="Debugger\DebuggerManager.cs" />
     <Compile Include="Debugger\ExpressionContext.cs" />
+    <Compile Include="Debugger\Flash\FlashFrame.cs" />
     <Compile Include="Debugger\Flash\FlashLocation.cs" />
     <Compile Include="Debugger\Flash\FlashSourceFile.cs" />
+    <Compile Include="Debugger\HxCpp\HxCppFrame.cs" />
     <Compile Include="Debugger\HxCpp\HxCppLocation.cs" />
     <Compile Include="Debugger\HxCpp\HxCppSourceFile.cs" />
     <Compile Include="Debugger\HxCpp\Server\Command.cs" />

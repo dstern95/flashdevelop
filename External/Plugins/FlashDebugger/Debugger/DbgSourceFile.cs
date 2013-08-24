@@ -9,6 +9,7 @@ namespace FlashDebugger.Debugger
 	/// </summary>
 	public interface DbgSourceFile
 	{
+		string FullPath { get; }
 		string LocalPath { get; }
 	}
 }
