@@ -152,6 +152,7 @@ namespace FlashDebugger.Debugger.HxCpp
 		public void UpdateBreakpoints(List<BreakPointInfo> breakpoints)
 		{
 			// add new ones
+			// todo, cache this in session, should not change while running, we don't dyn load anything.. right?
 			List<string> fres = MessageUtil.ToList(((Message.Files)session.Request(Command.Files())).list);
 			Dictionary<string, string> map = new Dictionary<string, string>(fres.Count);
 			foreach (string f in fres)
@@ -169,7 +170,7 @@ namespace FlashDebugger.Debugger.HxCpp
 						if (map.ContainsKey(bp.FileFullPath))
 						{
 							string remo = map[bp.FileFullPath];
-							Message res = session.Request(Command.AddFileLineBreakpoint(remo, bp.Line));
+							Message res = session.Request(Command.AddFileLineBreakpoint(remo, bp.Line + 1)); // todo, handle line fixes somewhere else
 							if (res is Message.FileLineBreakpointNumber)
 							{
 								bp.InternalData = ((Message.FileLineBreakpointNumber)res).number;
