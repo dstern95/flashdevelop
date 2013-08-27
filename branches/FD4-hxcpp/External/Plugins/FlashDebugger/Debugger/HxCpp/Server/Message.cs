@@ -26,12 +26,22 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
 		public class Terminator : StringList
 		{
+			public override string ToString()
+			{
+				return "[StringList.Terminator()]";
+			}
 		}
+
 		public class Element : StringList
 		{
 			public string string_ { get; set; }
 			public StringList next { get; set; }
+			public override string ToString()
+			{
+				return "[StringList.Element(string_=" + string_ + ", next=" + next + ")]";
+			}
 		}
+
 	}
 
 	class BreakpointList
@@ -59,7 +69,12 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
 		public class Terminator : BreakpointList
 		{
+			public override string ToString()
+			{
+				return "[BreakpointList.Terminator()]";
+			}
 		}
+
 		public class Breakpoint : BreakpointList
 		{
 			public int number { get; set; }
@@ -67,7 +82,12 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			public bool enabled { get; set; }
 			public bool multi { get; set; }
 			public BreakpointList next { get; set; }
+			public override string ToString()
+			{
+				return "[BreakpointList.Breakpoint(number=" + number + ", description=" + description + ", enabled=" + enabled + ", multi=" + multi + ", next=" + next + ")]";
+			}
 		}
+
 	}
 
 	class BreakpointLocationList
@@ -101,19 +121,34 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
 		public class Terminator : BreakpointLocationList
 		{
+			public override string ToString()
+			{
+				return "[BreakpointLocationList.Terminator()]";
+			}
 		}
+
 		public class FileLine : BreakpointLocationList
 		{
 			public string fileName { get; set; }
 			public int lineNumber { get; set; }
 			public BreakpointLocationList next { get; set; }
+			public override string ToString()
+			{
+				return "[BreakpointLocationList.FileLine(fileName=" + fileName + ", lineNumber=" + lineNumber + ", next=" + next + ")]";
+			}
 		}
+
 		public class ClassFunction : BreakpointLocationList
 		{
 			public string className { get; set; }
 			public string functionName { get; set; }
 			public BreakpointLocationList next { get; set; }
+			public override string ToString()
+			{
+				return "[BreakpointLocationList.ClassFunction(className=" + className + ", functionName=" + functionName + ", next=" + next + ")]";
+			}
 		}
+
 	}
 
 	class BreakpointStatusList
@@ -173,37 +208,72 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
 		public class Terminator : BreakpointStatusList
 		{
+			public override string ToString()
+			{
+				return "[BreakpointStatusList.Terminator()]";
+			}
 		}
+
 		public class Nonexistent : BreakpointStatusList
 		{
 			public int number { get; set; }
 			public BreakpointStatusList next { get; set; }
+			public override string ToString()
+			{
+				return "[BreakpointStatusList.Nonexistent(number=" + number + ", next=" + next + ")]";
+			}
 		}
+
 		public class Disabled : BreakpointStatusList
 		{
 			public int number { get; set; }
 			public BreakpointStatusList next { get; set; }
+			public override string ToString()
+			{
+				return "[BreakpointStatusList.Disabled(number=" + number + ", next=" + next + ")]";
+			}
 		}
+
 		public class AlreadyDisabled : BreakpointStatusList
 		{
 			public int number { get; set; }
 			public BreakpointStatusList next { get; set; }
+			public override string ToString()
+			{
+				return "[BreakpointStatusList.AlreadyDisabled(number=" + number + ", next=" + next + ")]";
+			}
 		}
+
 		public class Enabled : BreakpointStatusList
 		{
 			public int number { get; set; }
 			public BreakpointStatusList next { get; set; }
+			public override string ToString()
+			{
+				return "[BreakpointStatusList.Enabled(number=" + number + ", next=" + next + ")]";
+			}
 		}
+
 		public class AlreadyEnabled : BreakpointStatusList
 		{
 			public int number { get; set; }
 			public BreakpointStatusList next { get; set; }
+			public override string ToString()
+			{
+				return "[BreakpointStatusList.AlreadyEnabled(number=" + number + ", next=" + next + ")]";
+			}
 		}
+
 		public class Deleted : BreakpointStatusList
 		{
 			public int number { get; set; }
 			public BreakpointStatusList next { get; set; }
+			public override string ToString()
+			{
+				return "[BreakpointStatusList.Deleted(number=" + number + ", next=" + next + ")]";
+			}
 		}
+
 	}
 
 	class ThreadStatus
@@ -243,21 +313,46 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
 		public class Running : ThreadStatus
 		{
+			public override string ToString()
+			{
+				return "[ThreadStatus.Running()]";
+			}
 		}
+
 		public class StoppedImmediate : ThreadStatus
 		{
+			public override string ToString()
+			{
+				return "[ThreadStatus.StoppedImmediate()]";
+			}
 		}
+
 		public class StoppedBreakpoint : ThreadStatus
 		{
 			public int number { get; set; }
+			public override string ToString()
+			{
+				return "[ThreadStatus.StoppedBreakpoint(number=" + number + ")]";
+			}
 		}
+
 		public class StoppedUncaughtException : ThreadStatus
 		{
+			public override string ToString()
+			{
+				return "[ThreadStatus.StoppedUncaughtException()]";
+			}
 		}
+
 		public class StoppedCriticalError : ThreadStatus
 		{
 			public string description { get; set; }
+			public override string ToString()
+			{
+				return "[ThreadStatus.StoppedCriticalError(description=" + description + ")]";
+			}
 		}
+
 	}
 
 	class FrameList
@@ -287,7 +382,12 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
 		public class Terminator : FrameList
 		{
+			public override string ToString()
+			{
+				return "[FrameList.Terminator()]";
+			}
 		}
+
 		public class Frame : FrameList
 		{
 			public bool isCurrent { get; set; }
@@ -297,7 +397,12 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			public string fileName { get; set; }
 			public int lineNumber { get; set; }
 			public FrameList next { get; set; }
+			public override string ToString()
+			{
+				return "[FrameList.Frame(isCurrent=" + isCurrent + ", number=" + number + ", className=" + className + ", functionName=" + functionName + ", fileName=" + fileName + ", lineNumber=" + lineNumber + ", next=" + next + ")]";
+			}
 		}
+
 	}
 
 	class ThreadWhereList
@@ -324,14 +429,24 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
 		public class Terminator : ThreadWhereList
 		{
+			public override string ToString()
+			{
+				return "[ThreadWhereList.Terminator()]";
+			}
 		}
+
 		public class Where : ThreadWhereList
 		{
 			public int number { get; set; }
 			public ThreadStatus status { get; set; }
 			public FrameList frameList { get; set; }
 			public ThreadWhereList next { get; set; }
+			public override string ToString()
+			{
+				return "[ThreadWhereList.Where(number=" + number + ", status=" + status + ", frameList=" + frameList + ", next=" + next + ")]";
+			}
 		}
+
 	}
 
 	class Message
@@ -559,136 +674,296 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 		public class ErrorInternal : Message
 		{
 			public string details { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorInternal(details=" + details + ")]";
+			}
 		}
+
 		public class ErrorNoSuchThread : Message
 		{
 			public int number { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorNoSuchThread(number=" + number + ")]";
+			}
 		}
+
 		public class ErrorNoSuchFile : Message
 		{
 			public string fileName { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorNoSuchFile(fileName=" + fileName + ")]";
+			}
 		}
+
 		public class ErrorNoSuchBreakpoint : Message
 		{
 			public int number { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorNoSuchBreakpoint(number=" + number + ")]";
+			}
 		}
+
 		public class ErrorBadClassNameRegex : Message
 		{
 			public string details { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorBadClassNameRegex(details=" + details + ")]";
+			}
 		}
+
 		public class ErrorBadFunctionNameRegex : Message
 		{
 			public string details { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorBadFunctionNameRegex(details=" + details + ")]";
+			}
 		}
+
 		public class ErrorNoMatchingFunctions : Message
 		{
 			public string className { get; set; }
 			public string functionName { get; set; }
 			public StringList unresolvableClasses { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorNoMatchingFunctions(className=" + className + ", functionName=" + functionName + ", unresolvableClasses=" + unresolvableClasses + ")]";
+			}
 		}
+
 		public class ErrorBadCount : Message
 		{
 			public int count { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorBadCount(count=" + count + ")]";
+			}
 		}
+
 		public class ErrorCurrentThreadNotStopped : Message
 		{
 			public int threadNumber { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorCurrentThreadNotStopped(threadNumber=" + threadNumber + ")]";
+			}
 		}
+
 		public class ErrorEvaluatingExpression : Message
 		{
 			public string details { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ErrorEvaluatingExpression(details=" + details + ")]";
+			}
 		}
+
 		public class OK : Message
 		{
+			public override string ToString()
+			{
+				return "[Message.OK()]";
+			}
 		}
+
 		public class Exited : Message
 		{
+			public override string ToString()
+			{
+				return "[Message.Exited()]";
+			}
 		}
+
 		public class Detached : Message
 		{
+			public override string ToString()
+			{
+				return "[Message.Detached()]";
+			}
 		}
+
 		public class Files : Message
 		{
 			public StringList list { get; set; }
+			public override string ToString()
+			{
+				return "[Message.Files(list=" + list + ")]";
+			}
 		}
+
 		public class Classes : Message
 		{
 			public StringList list { get; set; }
+			public override string ToString()
+			{
+				return "[Message.Classes(list=" + list + ")]";
+			}
 		}
+
 		public class MemBytes : Message
 		{
 			public int bytes { get; set; }
+			public override string ToString()
+			{
+				return "[Message.MemBytes(bytes=" + bytes + ")]";
+			}
 		}
+
 		public class Compacted : Message
 		{
 			public int bytesBefore { get; set; }
 			public int bytesAfter { get; set; }
+			public override string ToString()
+			{
+				return "[Message.Compacted(bytesBefore=" + bytesBefore + ", bytesAfter=" + bytesAfter + ")]";
+			}
 		}
+
 		public class Collected : Message
 		{
 			public int bytesBefore { get; set; }
 			public int bytesAfter { get; set; }
+			public override string ToString()
+			{
+				return "[Message.Collected(bytesBefore=" + bytesBefore + ", bytesAfter=" + bytesAfter + ")]";
+			}
 		}
+
 		public class CurrentThread : Message
 		{
 			public int number { get; set; }
+			public override string ToString()
+			{
+				return "[Message.CurrentThread(number=" + number + ")]";
+			}
 		}
+
 		public class FileLineBreakpointNumber : Message
 		{
 			public int number { get; set; }
+			public override string ToString()
+			{
+				return "[Message.FileLineBreakpointNumber(number=" + number + ")]";
+			}
 		}
+
 		public class ClassFunctionBreakpointNumber : Message
 		{
 			public int number { get; set; }
 			public StringList unresolvableClasses { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ClassFunctionBreakpointNumber(number=" + number + ", unresolvableClasses=" + unresolvableClasses + ")]";
+			}
 		}
+
 		public class Breakpoints : Message
 		{
 			public BreakpointList list { get; set; }
+			public override string ToString()
+			{
+				return "[Message.Breakpoints(list=" + list + ")]";
+			}
 		}
+
 		public class BreakpointDescription : Message
 		{
 			public int number { get; set; }
 			public BreakpointLocationList list { get; set; }
+			public override string ToString()
+			{
+				return "[Message.BreakpointDescription(number=" + number + ", list=" + list + ")]";
+			}
 		}
+
 		public class BreakpointStatuses : Message
 		{
 			public BreakpointStatusList list { get; set; }
+			public override string ToString()
+			{
+				return "[Message.BreakpointStatuses(list=" + list + ")]";
+			}
 		}
+
 		public class Continued : Message
 		{
 			public int count { get; set; }
+			public override string ToString()
+			{
+				return "[Message.Continued(count=" + count + ")]";
+			}
 		}
+
 		public class ThreadsWhere : Message
 		{
 			public ThreadWhereList list { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ThreadsWhere(list=" + list + ")]";
+			}
 		}
+
 		public class CurrentFrame : Message
 		{
 			public int number { get; set; }
+			public override string ToString()
+			{
+				return "[Message.CurrentFrame(number=" + number + ")]";
+			}
 		}
+
 		public class Variables : Message
 		{
 			public StringList list { get; set; }
+			public override string ToString()
+			{
+				return "[Message.Variables(list=" + list + ")]";
+			}
 		}
+
 		public class Value : Message
 		{
 			public string expression { get; set; }
 			public string type { get; set; }
 			public string value { get; set; }
+			public override string ToString()
+			{
+				return "[Message.Value(expression=" + expression + ", type=" + type + ", value=" + value + ")]";
+			}
 		}
+
 		public class ThreadCreated : Message
 		{
 			public int number { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ThreadCreated(number=" + number + ")]";
+			}
 		}
+
 		public class ThreadTerminated : Message
 		{
 			public int number { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ThreadTerminated(number=" + number + ")]";
+			}
 		}
+
 		public class ThreadStarted : Message
 		{
 			public int number { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ThreadStarted(number=" + number + ")]";
+			}
 		}
+
 		public class ThreadStopped : Message
 		{
 			public int number { get; set; }
@@ -696,11 +971,21 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			public string functionName { get; set; }
 			public string fileName { get; set; }
 			public int lineNumber { get; set; }
+			public override string ToString()
+			{
+				return "[Message.ThreadStopped(number=" + number + ", className=" + className + ", functionName=" + functionName + ", fileName=" + fileName + ", lineNumber=" + lineNumber + ")]";
+			}
 		}
+
 		public class MessageId : Message
 		{
 			public int id { get; set; }
 			public Message message { get; set; }
+			public override string ToString()
+			{
+				return "[Message.MessageId(id=" + id + ", message=" + message + ")]";
+			}
 		}
+
 	}
 }
