@@ -132,7 +132,7 @@ namespace ProjectManager
             this.project = project;
 
             List<Project> projects = tree.Projects;
-            //projects.Clear(); // only one project active
+            projects.Clear(); // only one project active
             if (project != null) projects.Add(project);
             else projects.Clear();
             tree.Projects = projects;
