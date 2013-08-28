@@ -124,6 +124,14 @@ namespace ProjectManager.Controls
                 TargetBuildSelector.Visible = true;
                 TargetBuildSelector.Enabled = true;
             }
+            else if (project.OutputType == OutputType.CustomBuild)
+            {
+                string target = project.TargetBuild ?? "";
+                if (target != "") TargetBuildSelector.Items.Insert(0, target);
+                TargetBuildSelector.Text = target;
+                TargetBuildSelector.Visible = true;
+                TargetBuildSelector.Enabled = true;
+            }
             else
             {
                 TargetBuildSelector.Visible = false;
