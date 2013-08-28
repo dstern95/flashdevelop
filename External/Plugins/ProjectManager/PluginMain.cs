@@ -299,8 +299,7 @@ namespace ProjectManager
         {
             string target = menus.TargetBuildSelector.Text;
             Project project = activeProject;
-            if (project != null && project.MovieOptions.TargetBuildTypes != null
-                && project.TargetBuild != target)
+            if (project != null && project.TargetBuild != target)
             {
                 if (!menus.TargetBuildSelector.Items.Contains(target))
                     menus.TargetBuildSelector.Items.Insert(0, target);
