@@ -25,7 +25,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 				listenSocket.Bind(ep);
 				listenSocket.Listen(1); // just 1 for now
 				listening = true;
-				PluginCore.Managers.TraceManager.AddAsync("Listening", -1);
+				log("Listening");
 			}
 			catch (Exception ex)
 			{
@@ -55,7 +55,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 				if (listenSocket.Poll(period, SelectMode.SelectRead))
 				{
 					Socket cli = listenSocket.Accept();
-					PluginCore.Managers.TraceManager.AddAsync("Accepted", -1);
+					log("Accepted");
 					Session sess = new Session(cli);
 
 					return sess;
@@ -75,6 +75,15 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 		{
 			get { return listening; }
 		}
+
+		private static void log(string text)
+		{
+			if (PluginMain.settingObject.VerboseOutput)
+			{
+				PluginCore.Managers.TraceManager.AddAsync("Manager: " + text, -1);
+			}
+		}
+
 	}
 
 	class ManagerAcceptTimeoutExceptio : Exception
