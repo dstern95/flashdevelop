@@ -817,24 +817,16 @@ namespace FlashDebugger.Debugger.Flash
 			return ret;
 		}
 
-		public Variable[] GetArgs(int frameNumber)
+		public Variable[] GetVariables(int frameNumber)
 		{
-			return m_Session.getFrames()[frameNumber].getArguments(m_Session);
-		}
-
-		public Variable GetThis(int frameNumber)
-		{
-			return m_Session.getFrames()[frameNumber].getThis(m_Session);
-		}
-
-		public Variable[] GetLocals(int frameNumber)
-		{
-			return m_Session.getFrames()[frameNumber].getLocals(m_Session);
-		}
-
-		public Value GetValue(int idValue)
-		{
-			return m_Session.getValue(idValue);
+			List<Variable> ret = new List<Variable>();
+			Variable thisValue = m_Session.getFrames()[frameNumber].getThis(m_Session);
+			Variable[] args = m_Session.getFrames()[frameNumber].getArguments(m_Session);
+			Variable[] locals = m_Session.getFrames()[frameNumber].getLocals(m_Session);
+			if (thisValue != null) ret.Add(thisValue);
+			if (args != null) ret.AddRange(args);
+			if (locals != null) ret.AddRange(locals);
+			return ret.ToArray();
 		}
 
 		public void UpdateBreakpoints(List<BreakPointInfo> breakpoints)
