@@ -447,30 +447,8 @@ namespace FlashDebugger
 			DbgFrame[] frames = m_Interface.GetFrames();
             if (frames != null && m_CurrentFrame < frames.Length)
 			{
-				Variable thisValue = null;// m_FlashInterface.GetThis(m_CurrentFrame);
-				Variable[] args = null;// m_FlashInterface.GetArgs(m_CurrentFrame);
-				Variable[] locals = null;// m_FlashInterface.GetLocals(m_CurrentFrame);
-				int count = 0;
-				int i = 0;
-				if (thisValue != null) count +=1;
-				if (args != null) count += args.Length;
-				if (locals != null) count += locals.Length;
-				Variable[] all = new Variable[count];
-				if (thisValue != null) 
-				{
-					all[0] = thisValue;
-					i++;
-				}
-				if (args != null)
-				{
-					args.CopyTo(all, i);
-					i += args.Length;
-				}
-				if (locals != null)
-				{
-					locals.CopyTo(all, i);
-				}
 				PanelsHelper.pluginUI.Clear();
+				Variable[] all = m_FlashInterface.GetVariables(m_CurrentFrame);
 				if (all.Length > 0)
 				{
 					PanelsHelper.pluginUI.SetData(all);
