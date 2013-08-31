@@ -225,6 +225,7 @@ namespace HaXeContext
             if (contextSetup == null)
             {
                 contextSetup = new ContextSetupInfos();
+                contextSetup.Classpath = new string[] { Environment.CurrentDirectory };
                 contextSetup.Lang = settings.LanguageId;
                 contextSetup.Platform = "Flash Player";
                 contextSetup.Version = "10.0";
@@ -1104,6 +1105,8 @@ namespace HaXeContext
                     member.Name = var;
                     member.Access = Visibility.Public;
                     member.Comments = desc;
+                    var p1 = desc.IndexOf('\r');
+                    var p2 = desc.IndexOf('\n');
 
                     // Package or Class
                     if (type == "")
