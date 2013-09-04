@@ -1847,7 +1847,7 @@ namespace ASCompletion.Model
                 // modifiers
                 else
                 {
-                    if (context == FlagType.Class)
+                    if (context == FlagType.Class || context == FlagType.TypeDef)
                     {
                         if (token == "extends")
                         {
