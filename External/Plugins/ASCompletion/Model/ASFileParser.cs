@@ -2270,7 +2270,14 @@ namespace ASCompletion.Model
                         break;
 
                     case FlagType.TypeDef:
-                        if (inTypedef && curClass != null && prevToken.Text != "typedef")
+                        if (curModifiers == FlagType.Extends) // cached syntax
+                        {
+                            if (curClass != null)
+                            {
+                                curClass.ExtendsType = token;
+                            }
+                        }
+                        else if (inTypedef && curClass != null && prevToken.Text != "typedef")
                         {
                             member = new MemberModel();
                             member.Comments = curComment;
@@ -2283,7 +2290,7 @@ namespace ASCompletion.Model
                             //
                             curMember = member;
                         }
-                        else
+                        else 
                         {
                             if (curClass != null)
                             {
@@ -2302,6 +2309,9 @@ namespace ASCompletion.Model
                             curClass.LineFrom = (modifiersLine != 0) ? modifiersLine : curToken.Line;
                             curClass.LineTo = curToken.Line;
                             AddClass(model, curClass);
+                            if (token == "Container")
+                            {
+                            }
                         }
                         break;
 
