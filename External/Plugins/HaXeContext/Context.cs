@@ -788,7 +788,7 @@ namespace HaXeContext
             {
                 Match genType = re_genericType.Match(cname);
                 if (genType.Success)
-                    return ResolveGenericType(genType.Groups["gen"].Value + "<T>", genType.Groups["type"].Value, inFile);
+                    return ResolveGenericType(genType.Groups["gen"].Value, genType.Groups["type"].Value, inFile);
                 else return ClassModel.VoidClass;
             }
 
@@ -846,7 +846,7 @@ namespace HaXeContext
             ClassModel aClass = base.ResolveType(baseType, inFile);
             if (aClass.IsVoid()) return aClass;
 
-            if (aClass.QualifiedName == "Dynamic<T>")
+            if (aClass.QualifiedName == "Dynamic")
             {
                 ClassModel indexClass = ResolveType(indexType, inFile);
                 //if (!indexClass.IsVoid()) return indexClass;
@@ -861,7 +861,7 @@ namespace HaXeContext
             // clone the type
             aClass = aClass.Clone() as ClassModel;
 
-            aClass.Name = baseType.Substring(baseType.LastIndexOf('.') + 1) + "@" + indexType;
+            aClass.Name = baseType.Substring(baseType.LastIndexOf('.') + 1) + "<" + indexType + ">";
             aClass.IndexType = indexType;
 
             string typed = "<" + indexType + ">";
