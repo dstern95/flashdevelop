@@ -124,8 +124,8 @@ namespace FlashDebugger.Controls
         {
         }
 
-        public DataNode(string value)
-            : base(value)
+        public DataNode(string text)
+            : base(text)
         {
         }
 
