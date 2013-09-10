@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using FlashDebugger.Controls;
 
 namespace FlashDebugger.Debugger
 {
@@ -49,6 +50,8 @@ namespace FlashDebugger.Debugger
 		DbgLocation GetCurrentLocation();
 
 		DbgFrame[] GetFrames();
+
+		DataNode[] GetVariableNodes(int frameNumber);
 
     }
 }

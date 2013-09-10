@@ -4,6 +4,7 @@ using System.Text;
 using FlashDebugger.Debugger.HxCpp.Server;
 using PluginCore.Managers;
 using System.Net.Sockets;
+using FlashDebugger.Controls;
 
 namespace FlashDebugger.Debugger.HxCpp
 {
@@ -120,6 +121,7 @@ namespace FlashDebugger.Debugger.HxCpp
 				{
 					//Message.ThreadStopped x;
 					// store current location?
+					frames = null;
 					isSuspended = true; // TODO
 					if (PauseEvent != null) { PauseEvent(this); }
 				}
@@ -216,15 +218,25 @@ namespace FlashDebugger.Debugger.HxCpp
 			}
 		}
 
+		private FrameList.Frame[] frames = null;
+
+		private FrameList.Frame[] getFrames()
+		{
+			if (frames == null)
+			{
+				Message.ThreadsWhere msg = (Message.ThreadsWhere)session.Request(Command.WhereCurrentThread(false));
+				List<ThreadWhereList.Where> tl = MessageUtil.ToList(msg.list);
+				List<FrameList.Frame> fl = MessageUtil.ToList(tl[0].frameList);
+				frames = fl.ToArray();
+			}
+			return frames;
+		}
+
 		public DbgLocation GetCurrentLocation()
 		{
 			try
 			{
-				// todo, cache this
-				Message.ThreadsWhere msg = (Message.ThreadsWhere)session.Request(Command.WhereCurrentThread(false));
-				List<ThreadWhereList.Where> tl = MessageUtil.ToList(msg.list);
-				List<FrameList.Frame> fl = MessageUtil.ToList(tl[0].frameList);
-				return HxCppLocation.FromFrame(fl[0]);
+				return HxCppLocation.FromFrame(getFrames()[0]);
 			}
 			catch (Exception ex)
 			{
@@ -233,15 +245,14 @@ namespace FlashDebugger.Debugger.HxCpp
 			}
 		}
 
+
 		public DbgFrame[] GetFrames()
 		{
 			try
 			{
-				Message.ThreadsWhere msg = (Message.ThreadsWhere)session.Request(Command.WhereCurrentThread(false));
-				List<ThreadWhereList.Where> tl = MessageUtil.ToList(msg.list);
-				List<FrameList.Frame> fl = MessageUtil.ToList(tl[0].frameList);
-				DbgFrame[] ret = new DbgFrame[fl.Count];
-				for (int i=0; i<fl.Count; i++)
+				FrameList.Frame[] fl = getFrames();
+				DbgFrame[] ret = new DbgFrame[fl.Length];
+				for (int i=0; i<fl.Length; i++)
 				{
 					ret[i] = HxCppFrame.FromFrame(fl[i]);
 				}
@@ -252,6 +263,25 @@ namespace FlashDebugger.Debugger.HxCpp
 				throw;
 				//return null;
 			}
+		}
+
+		public DataNode[] GetVariableNodes(int frameNumber)
+		{
+			setCurrentFrame(frameNumber);
+			Message.Variables msg = (Message.Variables)session.Request(Command.Variables(false));
+			List<string> vars = MessageUtil.ToList(msg.list);
+			List<HxCppDataNode> ret = new List<HxCppDataNode>(vars.Count);
+			foreach (string var in vars)
+			{
+				ret.Add(new HxCppDataNode(var));
+			}
+			return ret.ToArray();
+		}
+
+		// we need this, because the frames in HxCpp are somehow upside-down in comparison to flash
+		private void setCurrentFrame(int frameNumber)
+		{
+			session.Request(Command.SetFrame(getFrames()[frameNumber].number));
 		}
 	}
 }

@@ -2,7 +2,6 @@
 using System.Windows.Forms;
 using flash.tools.debugger;
 using FlashDebugger.Controls;
-using FlashDebugger.Debugger.Flash;
 using PluginCore;
 
 namespace FlashDebugger
@@ -43,22 +42,22 @@ namespace FlashDebugger
 			treeControl.Clear();
 		}
 
-        public void SetData(Variable[] variables)
-        {
-            treeControl.Tree.BeginUpdate();
-            try
-            {
-                foreach (Variable item in variables)
-                {
-					treeControl.AddNode(new FlashDataNode(item));
-                }
-            }
-            finally
-            {
-                treeControl.Tree.EndUpdate();
-            }
+		public void SetDataNodes(DataNode[] nodes)
+		{
+			treeControl.Tree.BeginUpdate();
+			try
+			{
+				foreach (DataNode node in nodes)
+				{
+					treeControl.AddNode(node);
+				}
+			}
+			finally
+			{
+				treeControl.Tree.EndUpdate();
+			}
 			treeControl.Enabled = true;
-        }
+		}
 
     }
 
