@@ -15,6 +15,7 @@ using PluginCore.Helpers;
 using ProjectManager.Projects.Haxe;
 using FlashDebugger.Debugger.Flash;
 using FlashDebugger.Debugger;
+using FlashDebugger.Controls;
 
 namespace FlashDebugger
 {
@@ -411,7 +412,7 @@ namespace FlashDebugger
             {
                 CurrentLocation = DebuggerInterface.GetCurrentLocation();
                 UpdateStackUI();
-                //UpdateLocalsUI();
+                UpdateLocalsUI();
                 UpdateMenuState(state);
                 (PluginBase.MainForm as Form).Activate();
             }
@@ -448,10 +449,10 @@ namespace FlashDebugger
             if (frames != null && m_CurrentFrame < frames.Length)
 			{
 				PanelsHelper.pluginUI.Clear();
-				Variable[] all = m_FlashInterface.GetVariables(m_CurrentFrame);
+				DataNode[] all = m_Interface.GetVariableNodes(m_CurrentFrame);
 				if (all.Length > 0)
 				{
-					PanelsHelper.pluginUI.SetData(all);
+					PanelsHelper.pluginUI.SetDataNodes(all);
 				}
 				CurrentLocation = frames[m_CurrentFrame].Location;
 				PanelsHelper.watchUI.UpdateElements();

@@ -9,6 +9,7 @@ using PluginCore.Managers;
 using net.sf.jni4net;
 using PluginCore.Helpers;
 using PluginCore;
+using FlashDebugger.Controls;
 
 namespace FlashDebugger.Debugger.Flash
 {
@@ -827,6 +828,17 @@ namespace FlashDebugger.Debugger.Flash
 			if (args != null) ret.AddRange(args);
 			if (locals != null) ret.AddRange(locals);
 			return ret.ToArray();
+		}
+
+		public DataNode[] GetVariableNodes(int frameNumber)
+		{
+			Variable[] vars = GetVariables(frameNumber);
+			FlashDataNode[] ret = new FlashDataNode[vars.Length];
+			for (int i = 0; i < vars.Length; i++)
+			{
+				ret[i] = new FlashDataNode(vars[i]);
+			}
+			return ret;
 		}
 
 		public void UpdateBreakpoints(List<BreakPointInfo> breakpoints)
