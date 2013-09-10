@@ -63,6 +63,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			int cmdId = Interlocked.Increment(ref nextCmdId);
 			
 			// write timeout?
+			log("out " + cmdId + ": " + cmd.ToString());
 			Protocol.WriteCommand(socket, Command.CommandId(cmdId, cmd));
 
 			int timeout = 5000;
