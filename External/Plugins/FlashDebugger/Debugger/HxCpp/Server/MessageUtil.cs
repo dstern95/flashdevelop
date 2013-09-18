@@ -38,5 +38,16 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 			}
 			return ret;
 		}
+
+		static public List<VariableName> ToList(VariableNameList list)
+		{
+			List<VariableName> ret = new List<VariableName>();
+			while (list is VariableNameList.Element)
+			{
+				ret.Add(((VariableNameList.Element)list).variable);
+				list = ((VariableNameList.Element)list).next;
+			}
+			return ret;
+		}
 	}
 }

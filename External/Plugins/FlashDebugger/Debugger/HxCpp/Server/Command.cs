@@ -73,6 +73,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 		// Response: Valuet, ErrorCurrentThreadNotStopped,
 		// ErrorEvaluatingExpression
 		public static Command CommandId(int id, Command command) { Command cmd = new Command("CommandId"); cmd.arguments.Add(id); cmd.arguments.Add(command); return cmd; }
-
+		public static Command GetExpression(bool unsafe_, string expression) { Command cmd = new Command("GetExpression"); cmd.arguments.Add(unsafe_); cmd.arguments.Add(expression); return cmd; }
+		// Response: Variable
 	}
 }
