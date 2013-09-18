@@ -48,14 +48,17 @@ namespace FlashDebugger.Controls
 			return Text.StartsWith("_") ? 1 : -1;
 		}
 
+		private string m_Value;
+
         public virtual string Value
         {
             get
             {
-                return "";
+				return m_Value;
             }
             set
             {
+				m_Value = value;
             }
         }
 

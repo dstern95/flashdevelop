@@ -273,7 +273,7 @@ namespace FlashDebugger.Debugger.HxCpp
 			List<HxCppDataNode> ret = new List<HxCppDataNode>(vars.Count);
 			foreach (string var in vars)
 			{
-				ret.Add(new HxCppDataNode(var));
+				ret.Add(new HxCppDataNode(var, var, session));
 			}
 			return ret.ToArray();
 		}
