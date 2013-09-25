@@ -27,7 +27,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 				listening = true;
 				log("Listening");
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 				listenSocket.Close();
 				listenSocket = null;

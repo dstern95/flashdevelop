@@ -87,7 +87,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 				responseWaitHandle.WaitOne(timeout);
 				pass2 = true;
 			}
-			throw new Exception("No reponse in time");
+			throw new Exception("No response in time");
 		}
 
 		public int GetEventCount()
