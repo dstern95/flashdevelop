@@ -76,7 +76,7 @@ namespace FlashDebugger.Debugger.HxCpp
 					catch { }
 				}
 			}
-			catch (ManagerAcceptTimeoutExceptio mate)
+			catch (ManagerAcceptTimeoutExceptio)
 			{
 				TraceManager.AddAsync("[No debugger connection request]", -1);
 			}
@@ -238,7 +238,7 @@ namespace FlashDebugger.Debugger.HxCpp
 			{
 				return HxCppLocation.FromFrame(getFrames()[0]);
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 				throw;
 				//return null;
@@ -258,7 +258,7 @@ namespace FlashDebugger.Debugger.HxCpp
 				}
 				return ret;
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 				throw;
 				//return null;
