@@ -104,11 +104,6 @@ namespace FlashDebugger.Debugger.HxCpp
 					VariableName.Variable varchild = (VariableName.Variable)child;
 					nodes.Add(new HxCppDataNode(varchild.name, varchild.fullName, session));
 				}
-				else if (child is VariableName.VariableNoValue)
-				{
-					VariableName.VariableNoValue varchild = (VariableName.VariableNoValue)child;
-					nodes.Add(new HxCppDataNode(varchild.name, varchild.fullName, session));
-				}
 			}
 			nodes.Sort();
 			foreach (DataNode item in nodes)
