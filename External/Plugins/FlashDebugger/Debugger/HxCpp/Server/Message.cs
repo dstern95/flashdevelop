@@ -438,6 +438,10 @@ namespace FlashDebugger.Debugger.HxCpp.Server
                 ret.children = VariableNameList.FromEnum((HaxeEnum)haxeEnum.arguments[2]);
                 return ret;
             }
+            if (haxeEnum.constructor == "NoItem") {
+                NoItem ret = new NoItem();
+                return ret;
+            }
             throw new InvalidCastException("Unknown constructor "+haxeEnum.constructor+" for HaxeEnum "+haxeEnum.name);
         }
 
@@ -452,6 +456,14 @@ namespace FlashDebugger.Debugger.HxCpp.Server
             }
         }
 
+        public class NoItem : VariableValue
+        {
+            public override string ToString()
+            {
+                return "[VariableValue.NoItem()]";
+            }
+        }
+
     }
 
     class VariableName
@@ -463,13 +475,8 @@ namespace FlashDebugger.Debugger.HxCpp.Server
                 Variable ret = new Variable();
                 ret.name = (string)haxeEnum.arguments[0];
                 ret.fullName = (string)haxeEnum.arguments[1];
-                ret.value = VariableValue.FromEnum((HaxeEnum)haxeEnum.arguments[2]);
-                return ret;
-            }
-            if (haxeEnum.constructor == "VariableNoValue") {
-                VariableNoValue ret = new VariableNoValue();
-                ret.name = (string)haxeEnum.arguments[0];
-                ret.fullName = (string)haxeEnum.arguments[1];
+                ret.isStatic = (bool)haxeEnum.arguments[2];
+                ret.value = VariableValue.FromEnum((HaxeEnum)haxeEnum.arguments[3]);
                 return ret;
             }
             throw new InvalidCastException("Unknown constructor "+haxeEnum.constructor+" for HaxeEnum "+haxeEnum.name);
@@ -479,20 +486,11 @@ namespace FlashDebugger.Debugger.HxCpp.Server
         {
             public string name { get; set; }
             public string fullName { get; set; }
+            public bool isStatic { get; set; }
             public VariableValue value { get; set; }
             public override string ToString()
             {
-                return "[VariableName.Variable(name=" + name + ", fullName=" + fullName + ", value=" + value + ")]";
-            }
-        }
-
-        public class VariableNoValue : VariableName
-        {
-            public string name { get; set; }
-            public string fullName { get; set; }
-            public override string ToString()
-            {
-                return "[VariableName.VariableNoValue(name=" + name + ", fullName=" + fullName + ")]";
+                return "[VariableName.Variable(name=" + name + ", fullName=" + fullName + ", isStatic=" + isStatic + ", value=" + value + ")]";
             }
         }
 
