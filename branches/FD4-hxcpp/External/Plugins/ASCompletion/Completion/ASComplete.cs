@@ -1454,7 +1454,7 @@ namespace ASCompletion.Completion
 
             // inherit doc
             while ((method.Flags & FlagType.Override) > 0 && result.InClass != null
-                && (method.Comments == null || method.Comments.Trim() == ""))
+                && (method.Comments == null || method.Comments.Trim() == "" || method.Comments.Contains("@inheritDoc")))
             {
                 FindMember(method.Name, result.InClass.Extends, result, 0, 0);
                 method = result.Member;
@@ -1936,11 +1936,11 @@ namespace ASCompletion.Completion
             if (Sci != ASContext.CurSciControl) return;
             int position = Sci.CurrentPos;
             ContextFeatures features = ASContext.Context.Features;
-            string word = Sci.GetWordLeft(position-1, false);
-            int dotIndex = expr.Value.LastIndexOf(features.dot);
-            string tail = (dotIndex >= 0) ? expr.Value.Substring(dotIndex + features.dot.Length) : expr.Value;
-            if (expr.Position > position || !word.StartsWith(tail)) 
+            ASExpr local = GetExpression(Sci, position);
+            if (!local.Value.StartsWith(expr.Value) 
+                || expr.Value.LastIndexOf(features.dot) != local.Value.LastIndexOf(features.dot))
                 return;
+            string word = Sci.GetWordLeft(position-1, false);
 
             // show completion
             List<ICompletionListItem> customList = new List<ICompletionListItem>();

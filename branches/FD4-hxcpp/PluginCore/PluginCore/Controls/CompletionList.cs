@@ -206,7 +206,7 @@ namespace PluginCore.Controls
             isActive = true;
             tempoTip.Enabled = false;
             showTime = DateTime.Now.Ticks;
-            disableSmartMatch = PluginBase.MainForm.Settings.DisableSmartMatch;
+            disableSmartMatch = noAutoInsert || PluginBase.MainForm.Settings.DisableSmartMatch;
             UITools.Manager.LockControl(sci);
             faded = false;
 		}
@@ -451,6 +451,7 @@ namespace PluginCore.Controls
         /// </summary> 
 		static public void FindWordStartingWith(String word)
 		{
+            if (word == null) word = "";
 			Int32 len = word.Length;
             Int32 maxLen = 0;
             Int32 lastScore = 0;
@@ -899,7 +900,7 @@ namespace PluginCore.Controls
 					return true;
 					
 				case Keys.Enter:
-                    if (!ReplaceText(sci, '\n'))
+                    if (/*noAutoInsert ||*/ !ReplaceText(sci, '\n'))
                     {
                         CompletionList.Hide();
                         return false;
@@ -915,9 +916,11 @@ namespace PluginCore.Controls
 					return true;
 					
 				case Keys.Space:
+                    if (noAutoInsert) CompletionList.Hide();
 					return false;
-					
-				case Keys.Up:
+
+                case Keys.Up:
+                    noAutoInsert = false;
 					// the list was hidden and it should not appear
 					if (!completionList.Visible)
 					{
@@ -941,8 +944,9 @@ namespace PluginCore.Controls
 						completionList.SelectedIndex = index;
 					}
 					break;
-					
-				case Keys.Down:
+
+                case Keys.Down:
+                    noAutoInsert = false;
 					// the list was hidden and it should not appear
 					if (!completionList.Visible)
 					{
@@ -966,8 +970,9 @@ namespace PluginCore.Controls
 						completionList.SelectedIndex = index;
 					}
 					break;
-					
-				case Keys.PageUp:
+
+                case Keys.PageUp:
+                    noAutoInsert = false;
 					// the list was hidden and it should not appear
 					if (!completionList.Visible)
 					{
@@ -984,8 +989,9 @@ namespace PluginCore.Controls
 						completionList.SelectedIndex = index;
 					}
 					break;
-					
-				case Keys.PageDown:
+
+                case Keys.PageDown:
+                    noAutoInsert = false;
 					// the list was hidden and it should not appear
 					if (!completionList.Visible)
 					{

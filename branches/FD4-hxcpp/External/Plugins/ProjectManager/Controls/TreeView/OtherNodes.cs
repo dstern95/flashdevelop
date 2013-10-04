@@ -5,28 +5,63 @@ using System.Collections;
 using System.Diagnostics;
 using ProjectManager.Projects;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace ProjectManager.Controls.TreeView
 {
 	public class ProjectNode : WatcherNode
 	{
+        Project projectRef;
+        ReferencesNode references;
+        bool isActive;
+
 		public ProjectNode(Project project) : base(project.Directory)
 		{
+            projectRef = project;
 			isDraggable = false;
 			isRenamable = false;
 		}
 
 		public override void Refresh(bool recursive)
 		{
+            if (References != null && References.Parent == this) Nodes.Remove(References);
+
 			base.Refresh(recursive);
-            Text = Project.Name + " (" + Project.Language.ToUpper() + ")";
+            Text = ProjectRef.Name + " (" + ProjectRef.Language.ToUpper() + ")";
 			ImageIndex = Icons.Project.Index;
 			SelectedImageIndex = ImageIndex;
-			NodeFont = new System.Drawing.Font(PluginCore.PluginBase.Settings.DefaultFont, FontStyle.Bold);
             Expand();
 
+            if (References != null) Nodes.Insert(0, References);
             NotifyRefresh();
 		}
+
+        public Project ProjectRef
+        {
+            get { return projectRef; }
+        }
+
+        public ReferencesNode References
+        {
+            get { return references; }
+            set
+            {
+                references = value;
+                if (references != null) Nodes.Insert(0, references);
+            }
+        }
+
+        public bool IsActive 
+        {
+            get { return isActive; }
+            set 
+            {
+                if (isActive == value) return;
+                isActive = value;
+                FontStyle style = isActive ? FontStyle.Bold : FontStyle.Regular;
+                NodeFont = new System.Drawing.Font(PluginCore.PluginBase.Settings.DefaultFont, style); 
+            }
+        }
 	}
 
 	public class ClasspathNode : WatcherNode
@@ -44,9 +79,8 @@ namespace ProjectManager.Controls.TreeView
             string[] excludes = PluginMain.Settings.FilteredDirectoryNames;
             char sep = Path.DirectorySeparatorChar;
             string[] parts = text.Split(sep);
-            string label = "";
+            List<string> label = new List<string>();
             Regex reVersion = new Regex("^[0-9]+[.,-][0-9]+");
-            string version = null;
 
             if (parts.Length > 0)
             {
@@ -55,21 +89,18 @@ namespace ProjectManager.Controls.TreeView
                     String part = parts[i] as String;
                     if (part != "" && part != "." && part != ".." && Array.IndexOf(excludes, part.ToLower()) == -1)
                     {
-                        if (Char.IsDigit(part[0]) && reVersion.IsMatch(part)) version = part;
+                        if (Char.IsDigit(part[0]) && reVersion.IsMatch(part)) label.Add(part);
                         else
                         {
-                            label = part;
+                            label.Add(part);
                             break;
                         }
                     }
-                }
-                if (label == "")
-                {
-                    label = parts[parts.Length - 1];
+                    else label.Add(part);
                 }
             }
-            if (version != null) label += " (" + version + ")";
-            Text = label;
+            label.Reverse();
+            Text = String.Join("/", label.ToArray());
             ToolTipText = classpath;
 		}
 
@@ -125,6 +156,18 @@ namespace ProjectManager.Controls.TreeView
             SelectedImageIndex = ImageIndex;
 
             NotifyRefresh();
+        }
+    }
+
+    public class ReferencesNode : GenericNode
+    {
+        public ReferencesNode(string projectPath, string text)
+            : base(Path.Combine(projectPath, "__References__"))
+        {
+            Text = text;
+            ImageIndex = SelectedImageIndex = Icons.HiddenFolder.Index;
+            isDraggable = false;
+            isRenamable = false;
         }
     }
 }

@@ -41,7 +41,7 @@ namespace HaXeContext
 
         public void getList(HaXeCompletionResultHandler callback)
         {
-            PluginBase.MainForm.CallCommand("SaveAllModified", null);
+            PluginBase.MainForm.CallCommand("Save", null);
 
             ThreadPool.QueueUserWorkItem(_ =>
             {
@@ -107,7 +107,7 @@ namespace HaXeContext
 
             // Build haXe command
             var paths = ProjectManager.PluginMain.Settings.GlobalClasspaths.ToArray();
-            var hxmlArgs = new List<String>(hp.BuildHXML(paths, "__nothing__", true));
+            var hxmlArgs = new List<String>(hp.BuildHXML(paths, "Nothing__", true));
             // quote paths
             for (int i = 0; i < hxmlArgs.Count; i++)
             {
@@ -117,6 +117,8 @@ namespace HaXeContext
                     Match m = reArg.Match(arg);
                     if (m.Success)
                         hxmlArgs[i] = m.Groups[1].Value + " \"" + m.Groups[2].Value.Trim() + "\"";
+                    else if (arg.StartsWith("#")) // commented line
+                        hxmlArgs[i] = "";
                 }
             }
 
@@ -163,7 +165,7 @@ namespace HaXeContext
                             var content = new ArrayList();
                             var xml = "";
                             while (++i < lines.Length)
-                                xml += lines[i];
+                                xml += lines[i] + "\n";
                             foreach (Match m in reListEntry.Matches(xml))
                             {
                                 var seq = new ArrayList
