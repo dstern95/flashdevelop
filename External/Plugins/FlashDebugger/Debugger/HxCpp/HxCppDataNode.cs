@@ -24,8 +24,7 @@ namespace FlashDebugger.Debugger.HxCpp
 				if (ret is Message.Variable)
 				{
 					Message.Variable var_ = (Message.Variable)ret;
-					VariableName.Variable varname = (VariableName.Variable)var_.variable;
-					item = (VariableValue.Item)varname.value;
+					item = (VariableValue.Item)var_.value;
 					children = MessageUtil.ToList(item.children);
 					Value = item.value;
 				}
