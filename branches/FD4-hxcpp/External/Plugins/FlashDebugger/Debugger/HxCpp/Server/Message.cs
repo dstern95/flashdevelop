@@ -36,7 +36,7 @@ namespace FlashDebugger.Debugger.HxCpp.Server
             public StringList next { get; set; }
             public override string ToString()
             {
-                return "[StringList.Element(string=" + string_ + ", next=" + next + ")]";
+                return "[StringList.Element(string_=" + string_ + ", next=" + next + ")]";
             }
         }
 
@@ -721,7 +721,8 @@ namespace FlashDebugger.Debugger.HxCpp.Server
             }
             if (haxeEnum.constructor == "Variable") {
                 Variable ret = new Variable();
-                ret.variable = VariableName.FromEnum((HaxeEnum)haxeEnum.arguments[0]);
+                ret.name = (string)haxeEnum.arguments[0];
+                ret.value = VariableValue.FromEnum((HaxeEnum)haxeEnum.arguments[1]);
                 return ret;
             }
             throw new InvalidCastException("Unknown constructor "+haxeEnum.constructor+" for HaxeEnum "+haxeEnum.name);
@@ -1045,10 +1046,11 @@ namespace FlashDebugger.Debugger.HxCpp.Server
 
         public class Variable : Message
         {
-            public VariableName variable { get; set; }
+            public string name { get; set; }
+            public VariableValue value { get; set; }
             public override string ToString()
             {
-                return "[Message.Variable(variable=" + variable + ")]";
+                return "[Message.Variable(name=" + name + ", value=" + value + ")]";
             }
         }
 
