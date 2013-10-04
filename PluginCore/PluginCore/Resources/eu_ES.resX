@@ -4995,4 +4995,12 @@ Lokalizazio pertsonalizatuek lehenetsiaren luzapen bat izan behar dute, adb. en-
     <value>Inline funtzioak [Inline] meta etiketarekin (ASC 2.0+).</value>
     <comment>Added after 4.4.2</comment>
   </data>
+  <data name="ProjectManager.Description.WebserverPort" xml:space="preserve">
+    <value>HTTP zerbitzaria erabiltzen duten proiektuentzat Web Zerbitzari Lokala.</value>
+    <comment>Added after 4.4.2</comment>
+  </data>
+  <data name="ProjectManager.Label.TestMovieWebserver" xml:space="preserve">
+    <value>Web zerbitzaria...</value>
+    <comment>Added after 4.4.2</comment>
+  </data>
 </root>

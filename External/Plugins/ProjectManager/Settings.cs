@@ -36,12 +36,13 @@ namespace ProjectManager
         bool disableExtFlashIntegration = false;
         string newProjectDefaultDirectory = string.Empty;
         bool enableMxmlMapping = false;
+        int webserverPort = 2000;
 
         // These are string arrays because they are only edited by the propertygrid (which deals with them nicely)
         string[] excludedFileTypes = new string[] { ".p", ".abc", ".bak", ".tmp" };
         string[] excludedDirectories = new string[] { ".svn", "_svn", ".cvs", "_cvs", "cvs", "_sgbak", ".git", ".hg" };
         string[] executableFileTypes = new string[] { ".exe", ".lnk", ".fla", ".doc", ".pps", ".psd", ".png", ".jpg", ".gif", ".xls", ".docproj", ".ttf", ".otf", ".wav", ".mp3", ".ppt", ".pptx", ".docx", ".xlsx", ".ai", ".pdf", ".zip", ".rar" };
-        string[] filteredDirectoryNames = new string[] { "src", "source", "sources", "as", "as2", "as3", "actionscript", "flash", "classes", "trunk", "svn", "git", "hg" };
+        string[] filteredDirectoryNames = new string[] { "src", "source", "sources", "as", "as2", "as3", "actionscript", "flash", "classes", "trunk", "svn", "git", "hg", "..", "." };
 
         Color tabHighlightColor = Color.FromArgb(255, 190, 60);
         HighlightType tabHighlightType = HighlightType.ExternalFiles;
@@ -120,6 +121,16 @@ namespace ProjectManager
         {
             get { return disableExtFlashIntegration; }
             set { disableExtFlashIntegration = value; }
+        }
+
+        [DisplayName("Webserver Port")]
+        [LocalizedDescription("ProjectManager.Description.WebserverPort")]
+        [LocalizedCategory("ProjectManager.Category.OtherOptions")]
+        [DefaultValue(2000)]
+        public Int32 WebserverPort
+        {
+            get { return webserverPort; }
+            set { webserverPort = value; }
         }
         
         [DisplayName("Excluded File Types")]

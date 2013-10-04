@@ -576,7 +576,7 @@ namespace ASCompletion.Context
 			}
 			
 			// avoid duplicated pathes
-			string upath = path.ToUpper();
+			string upath = path.ToUpper().TrimEnd(new char[] { '\\', '/' });
 			foreach(PathModel apath in classPath)
 			{
 				if (apath.Path.ToUpper() == upath)
@@ -737,7 +737,7 @@ namespace ASCompletion.Context
         /// </summary>
         public virtual string[] GetExplorerMask()
         {
-            return new string[] { "*" + Settings.DefaultExtension };
+            if (Settings != null) return new string[] { "*" + Settings.DefaultExtension }; else return null;
         }
         #endregion
 

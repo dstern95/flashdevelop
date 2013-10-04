@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Drawing;
+using System.Threading;
 using System.Diagnostics;
 using System.Collections;
 using System.Windows.Forms;
@@ -11,12 +12,12 @@ using System.Text.RegularExpressions;
 using PluginCore.Localization;
 using System.ComponentModel;
 using WeifenLuo.WinFormsUI;
+using ASCompletion.Context;
 using PluginCore.Helpers;
 using PluginCore.Managers;
 using PluginCore.Controls;
 using ScintillaNet;
 using PluginCore;
-using System.Threading;
 
 namespace TaskListPanel
 {
@@ -65,8 +66,6 @@ namespace TaskListPanel
             this.filesCache = new Dictionary<String, DateTime>();
             try
             {
-                this.extensions = new List<String>();
-                this.extensions.AddRange(settings.FileExtensions);
                 if (settings.GroupValues.Length > 0)
                 {
                     this.groups.AddRange(settings.GroupValues);
@@ -133,6 +132,7 @@ namespace TaskListPanel
             this.listView.View = System.Windows.Forms.View.Details;
             this.listView.DoubleClick += new System.EventHandler(this.ListViewDoubleClick);
             this.listView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.ListViewColumnClick);
+            this.listView.KeyPress += new KeyPressEventHandler(this.ListViewKeyPress);
             // 
             // columnIcon
             // 
@@ -242,8 +242,6 @@ namespace TaskListPanel
             this.isEnabled = false;
             try
             {
-                this.extensions = new List<String>();
-                this.extensions.AddRange(settings.FileExtensions);
                 if (settings.GroupValues.Length > 0)
                 {
                     this.groups.AddRange(settings.GroupValues);
@@ -304,10 +302,9 @@ namespace TaskListPanel
                     }
                 }
             }
-            // in depth
             foreach (String dir in Directory.GetDirectories(path))
             {
-                if (context.Worker.CancellationPending) return new List<string>();
+                if (context.Worker.CancellationPending) return new List<String>();
                 Thread.Sleep(5);
                 if (this.ShouldBeScanned(dir, context.ExcludedPaths))
                 {
@@ -325,14 +322,13 @@ namespace TaskListPanel
             List<String> files = new List<String>();
             foreach (String path in context.Directories)
             {
-                if (context.Worker.CancellationPending) return new List<string>();
+                if (context.Worker.CancellationPending) return new List<String>();
                 Thread.Sleep(5);
                 try
                 {
-                    String projDir = PluginBase.CurrentProject.GetAbsolutePath(path);
-                    if (this.ShouldBeScanned(projDir, context.ExcludedPaths))
+                    if (this.ShouldBeScanned(path, context.ExcludedPaths))
                     {
-                        files.AddRange(this.GetFiles(projDir, context));
+                        files.AddRange(this.GetFiles(path, context));
                     }
                 }
                 catch {}
@@ -364,8 +360,8 @@ namespace TaskListPanel
             if (!this.isEnabled) return;
             this.listView.Items.Clear();
             this.filesCache.Clear();
-            if (PluginBase.CurrentProject != null) this.RefreshProject();
-            else
+            /*if (PluginBase.CurrentProject != null) this.RefreshProject();
+            else*/
             {
                 this.parseTimer.Enabled = false;
                 this.parseTimer.Stop();
@@ -383,21 +379,25 @@ namespace TaskListPanel
             if (this.isEnabled && PluginBase.CurrentProject != null)
             {
                 this.RefreshEnabled = false;
-                // stop current exploration
+                // Stop current exploration
                 if (this.parseTimer.Enabled) this.parseTimer.Stop();
                 this.parseTimer.Tag = null;
                 if (bgWork != null && bgWork.IsBusy) bgWork.CancelAsync();
-                // context
+                IProject project = PluginBase.CurrentProject;
                 ExplorationContext context = new ExplorationContext();
                 Settings settings = (Settings)this.pluginMain.Settings;
-                context.ExcludedPaths = (string[])settings.ExcludedPaths.Clone();
-                context.Directories = (string[])PluginBase.CurrentProject.SourcePaths.Clone();
-                context.HiddenPaths = PluginBase.CurrentProject.GetHiddenPaths();
-                for (int i = 0; i < context.HiddenPaths.Length; i++)
+                context.ExcludedPaths = (String[])settings.ExcludedPaths.Clone();
+                context.Directories = (String[])project.SourcePaths.Clone();
+                for (Int32 i = 0; i < context.Directories.Length; i++)
                 {
-                    context.HiddenPaths[i] = PluginBase.CurrentProject.GetAbsolutePath(context.HiddenPaths[i]);
+                    context.Directories[i] = project.GetAbsolutePath(context.Directories[i]);
                 }
-                // run background
+                context.HiddenPaths = project.GetHiddenPaths();
+                for (Int32 i = 0; i < context.HiddenPaths.Length; i++)
+                {
+                    context.HiddenPaths[i] = project.GetAbsolutePath(context.HiddenPaths[i]);
+                }
+                GetExtensions();
                 bgWork = new BackgroundWorker();
                 context.Worker = bgWork;
                 bgWork.WorkerSupportsCancellation = true;
@@ -407,6 +407,22 @@ namespace TaskListPanel
                 String message = TextHelper.GetString("Info.Refreshing");
                 this.toolStripLabel.Text = message;
             }
+        }
+
+        private void GetExtensions()
+        {
+            Settings settings = (Settings)pluginMain.Settings;
+            this.extensions = new List<String>();
+            foreach (String ext in settings.FileExtensions)
+            {
+                if (!String.IsNullOrEmpty(ext))
+                {
+                    if (!ext.StartsWith("*")) this.extensions.Add("*" + ext);
+                    else this.extensions.Add(ext);
+                }
+            }
+            String[] addExt = ASContext.Context.GetExplorerMask();
+            if (addExt != null && addExt.Length > 0) extensions.AddRange(addExt);
         }
 
         /// <summary>
@@ -494,8 +510,7 @@ namespace TaskListPanel
             this.toolStripLabel.Text = "";
             if (this.firstExecutionCompleted == false)
             {
-                UITools.Manager.OnMouseHover += new UITools.MouseHoverHandler(SciControlDwellStart); // one event for all controls
-                EventManager.AddEventHandler(this, EventType.FileSwitch | EventType.FileOpen);
+                EventManager.AddEventHandler(this, EventType.FileSwitch | EventType.FileSave);
             }
             this.firstExecutionCompleted = true;
         }
@@ -539,7 +554,7 @@ namespace TaskListPanel
         }
 
         /// <summary>
-        /// 
+        /// Clean match from dirt
         /// </summary>
         private string CleanMatch(string value)
         {
@@ -689,7 +704,6 @@ namespace TaskListPanel
         {
             if (!this.isEnabled)
             {
-
                 String message = TextHelper.GetString("Info.SettingError");
                 this.toolStripLabel.Text = message;
             }
@@ -701,9 +715,9 @@ namespace TaskListPanel
         }
 
         /// <summary>
-        /// When user stop mouse movement parse again this file
+        /// Parse again the current file occasionally
         /// </summary>
-        private void SciControlDwellStart(ScintillaControl sci, int position)
+        private void RefreshCurrentFile(ScintillaControl sci)
         {
             if (!this.isEnabled) return;
             try
@@ -762,11 +776,11 @@ namespace TaskListPanel
         public void HandleEvent(Object sender, NotifyEvent e, HandlingPriority prority)
         {
             if (!this.isEnabled) return;
+            ITabbedDocument document;
             switch (e.Type)
             {
-                case EventType.FileOpen:
                 case EventType.FileSwitch:
-                    ITabbedDocument document = PluginBase.MainForm.CurrentDocument;
+                    document = PluginBase.MainForm.CurrentDocument;
                     if (document.IsEditable)
                     {
                         if (this.currentFileName != null && this.currentPos > -1)
@@ -776,9 +790,14 @@ namespace TaskListPanel
                                 this.MoveToPosition(document.SciControl, currentPos);
                             }
                         }
+                        else RefreshCurrentFile(document.SciControl);
                     }
                     this.currentFileName = null;
                     this.currentPos = -1;
+                    break;
+                case EventType.FileSave:
+                    document = PluginBase.MainForm.CurrentDocument;
+                    if (document.IsEditable) RefreshCurrentFile(document.SciControl);
                     break;
             }
         }
@@ -804,6 +823,17 @@ namespace TaskListPanel
                 this.columnSorter.Order = SortOrder.Ascending;
             }
             this.listView.Sort();
+        }
+
+        /// <summary>
+        /// On enter, go to the selected item
+        /// </summary>
+        private void ListViewKeyPress(Object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (Char)Keys.Enter)
+            {
+                this.ListViewDoubleClick(null, null);
+            }
         }
 
         #endregion

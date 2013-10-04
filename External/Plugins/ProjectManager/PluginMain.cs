@@ -82,7 +82,7 @@ namespace ProjectManager
         private DockContent pluginPanel;
         private PluginUI pluginUI;
         private Image pluginImage;
-        private Project project;
+        private Project activeProject;
         private OpenResourceForm projectResources;
         private Boolean runOutput;
         private Boolean buildingAll;
@@ -122,12 +122,25 @@ namespace ProjectManager
 
         private void PatchSettings()
         {
+            if (Settings.WebserverPort == 0)
+            {
+                Settings.WebserverPort = 2000;
+            }
             // remove 'obj' from the excluded directory names - now /obj a hidden directory
             if (Settings.ExcludedDirectories.Length > 0 && Settings.ExcludedDirectories[0] == "obj")
             {
                 List<String> ex = new List<string>(Settings.ExcludedDirectories);
                 ex.RemoveAt(0);
                 Settings.ExcludedDirectories = ex.ToArray();
+                this.SaveSettings();
+            }
+            // add new filtered types if user has old settings
+            if (Array.IndexOf<string>(Settings.FilteredDirectoryNames, "git") < 0)
+            {
+                List<String> fdn = new List<string>(Settings.FilteredDirectoryNames);
+                fdn.Add("git");
+                fdn.Add("hg");
+                Settings.FilteredDirectoryNames = fdn.ToArray();
                 this.SaveSettings();
             }
         }
@@ -183,6 +196,7 @@ namespace ProjectManager
                 bool isDebug = menus.ConfigurationSelector.Text == TextHelper.GetString("Info.Debug");
                 FlexCompilerShell.Cleanup();
                 pluginUI.IsTraceDisabled = !isDebug;
+                Project project = activeProject;
                 if (project != null) project.TraceEnabled = isDebug;
             };
             menus.TargetBuildSelector.KeyDown += new KeyEventHandler(TargetBuildSelector_KeyDown);
@@ -250,7 +264,9 @@ namespace ProjectManager
             pluginUI.Menu.AddLibraryAsset.Click += delegate { TreeAddAsset(); };
             pluginUI.Menu.AddExistingFile.Click += delegate { TreeAddExistingFile(); };
             pluginUI.Menu.TestMovie.Click += delegate { TestMovie(); };
-            pluginUI.Menu.BuildProject.Click += delegate { BuildProject(); };
+            pluginUI.Menu.BuildProject.Click += delegate { 
+                BuildProject(); 
+            };
             pluginUI.Menu.CloseProject.Click += delegate { CloseProject(false); };
             pluginUI.Menu.Properties.Click += delegate { OpenProjectProperties(); };
             pluginUI.Menu.ShellMenu.Click += delegate { TreeShowShellMenu(); };
@@ -282,8 +298,8 @@ namespace ProjectManager
         private void ApplyTargetBuild()
         {
             string target = menus.TargetBuildSelector.Text;
-            if (project != null && project.MovieOptions.TargetBuildTypes != null
-                && project.TargetBuild != target)
+            Project project = activeProject;
+            if (project != null && project.TargetBuild != target)
             {
                 if (!menus.TargetBuildSelector.Items.Contains(target))
                     menus.TargetBuildSelector.Items.Insert(0, target);
@@ -303,6 +319,7 @@ namespace ProjectManager
 		{
             // we have to fiddle this a little since we only get once change to save our settings!
             // (further saves will be ignored by FD design)
+            Project project = activeProject; 
             string lastProject = (project != null) ? project.ProjectPath : "";
             CloseProject(true);
             Settings.LastProject = lastProject;
@@ -318,6 +335,7 @@ namespace ProjectManager
 		{
             TextEvent te = e as TextEvent;
             DataEvent de = e as DataEvent;
+            Project project;
             switch (e.Type)
             {
                 case EventType.UIStarted:
@@ -333,6 +351,8 @@ namespace ProjectManager
 
                 // replace $(SomeVariable) type stuff with things we know about
                 case EventType.ProcessArgs:
+                    project = activeProject; // replace arguments using active project data
+
                     if (!ProjectCreator.IsRunning && project != null && te.Value.IndexOf('$') >= 0)
                     {
                         // steal macro names and values from the very useful BuildEvent macros
@@ -358,7 +378,7 @@ namespace ProjectManager
                         te.Handled = true;
                         OpenProjectSilent(te.Value);
                     }
-                    else if (project != null && te.Value.EndsWith(".swf"))
+                    else if (te.Value.EndsWith(".swf"))
                     {
                         te.Handled = true;
                         OpenSwf(te.Value);
@@ -415,17 +435,18 @@ namespace ProjectManager
                     }
                     else if (de.Action == ProjectManagerCommands.SendProject)
                     {
-                        BroadcastProjectInfo();
+                        BroadcastProjectInfo(activeProject);
                         e.Handled = true;
                     }
                     else if (de.Action == ProjectManagerCommands.InstalledSDKsChanged)
                     {
+                        project = activeProject; // TODO refresh SDK for all projects
                         BuildActions.GetCompilerPath(project); // refresh project's SDK
                         e.Handled = true;
                     }
                     else if (de.Action == ProjectManagerCommands.BuildProject)
                     {
-                        if (project != null)
+                        if (Tree.Projects.Count > 0)
                         {
                             AutoSelectConfiguration((string)de.Data);
                             BuildProject();
@@ -434,6 +455,7 @@ namespace ProjectManager
                     }
                     else if (de.Action == ProjectManagerCommands.TestMovie)
                     {
+                        project = activeProject; // TODO we need a "runnable" project
                         if (project != null)
                         {
                             AutoSelectConfiguration((string)de.Data);
@@ -455,7 +477,7 @@ namespace ProjectManager
                     }
                     else if (de.Action == ProjectManagerCommands.HotBuild)
                     {
-                        if (project != null)
+                        if (activeProject != null)
                         {
                             AutoSelectConfiguration((string)de.Data);
                             TestMovie();
@@ -495,7 +517,7 @@ namespace ProjectManager
 
         private bool HandleKeyEvent(KeyEvent ke)
         {
-            if (project == null) return false;
+            if (activeProject == null) return false;
             // Handle tree-level simple shortcuts like copy/paste/del
             else if (Tree.Focused && !pluginUI.IsEditingLabel && ke != null)
             {
@@ -515,7 +537,7 @@ namespace ProjectManager
 
         #region Custom Methods
 
-        bool RestoreProjectSession()
+        bool RestoreProjectSession(Project project)
         {
             if (project == null || !Settings.UseProjectSessions) return false;
             String hash = HashCalculator.CalculateSHA1(project.ProjectPath.ToLower());
@@ -531,6 +553,8 @@ namespace ProjectManager
 
         void SaveProjectSession()
         {
+            Project project = Tree.Projects.Count > 0 ? Tree.Projects[0] : null; // TODO we need a main project/solution
+
             if (project == null || !Settings.UseProjectSessions) return;
             String hash = HashCalculator.CalculateSHA1(project.ProjectPath.ToLower());
             String sessionDir = Path.Combine(SettingsDir, "Sessions");
@@ -541,37 +565,24 @@ namespace ProjectManager
 
         void SetProject(Project project, Boolean stealFocus, Boolean internalOpening)
         {
-            if (this.project == project) return;
-            if (this.project != null) CloseProject(true);
+            if (Tree.Projects.Contains(project)) return;
+            if (activeProject != null) CloseProject(true);
 
-            this.project = project;
+            // configure
+            var prefs = PluginMain.Settings.GetPrefs(project);
+            project.TraceEnabled = !prefs.DebugMode;
+            project.TargetBuild = prefs.TargetBuild;
             project.UpdateVars(true);
 
-            // init
-            Environment.CurrentDirectory = project.Directory;
-            Settings.LastProject = project.ProjectPath;
-            Settings.Language = project.Language;
+            SetActiveProject(project);
 
-            // notify
-            PluginBase.CurrentSolution = project;
-            PluginBase.CurrentProject = project;
-            PluginBase.MainForm.RefreshUI();
-
-            BuildActions.GetCompilerPath(project); // detect project's SDK
-            BroadcastProjectInfo();
-
-            projectActions.UpdateASCompletion(MainForm, project);
-
-            // ui
-            pluginUI.SetProject(project);
-            pluginUI.NotifyIssues();
-            menus.SetProject(project);
+            // events
             project.ClasspathChanged += new ChangedHandler(ProjectClasspathsChanged);
             project.BeforeSave += new BeforeSaveHandler(ProjectBeforeSave);
             listenToPathChange = true;
 
             // activate
-            if (!internalOpening) RestoreProjectSession();
+            if (!internalOpening) RestoreProjectSession(project);
 
             if (stealFocus)
             {
@@ -579,6 +590,29 @@ namespace ProjectManager
                 pluginUI.Focus();
             }
             TabColors.UpdateTabColors(Settings);
+        }
+
+        private void SetActiveProject(Project project)
+        {
+            activeProject = project;
+
+            // init
+            Environment.CurrentDirectory = project.Directory;
+            Settings.LastProject = project.ProjectPath;
+            Settings.Language = project.Language;
+
+            // notify
+            PluginBase.CurrentProject = project;
+            PluginBase.MainForm.RefreshUI();
+
+            BuildActions.GetCompilerPath(project); // detect project's SDK
+            BroadcastProjectInfo(project);
+            projectActions.UpdateASCompletion(MainForm, project);
+
+            // ui
+            pluginUI.SetProject(project);
+            menus.SetProject(project); // TODO this should reflect the "solution"
+            pluginUI.NotifyIssues();
         }
 
         void SetProject(Project project, Boolean stealFocus)
@@ -592,7 +626,9 @@ namespace ProjectManager
 
         void CloseProject(bool internalClosing)
         {
+            Project project = Tree.Projects.Count > 0 ? Tree.Projects[0] : null; // TODO we need a main project/solution
             if (project == null) return; // already closed
+            listenToPathChange = false;
 
             // save project prefs
             ProjectPreferences prefs = Settings.GetPrefs(project);
@@ -602,13 +638,14 @@ namespace ProjectManager
             
             if (!PluginBase.MainForm.ClosingEntirely) SaveProjectSession();
 
-            project = null;
+            activeProject = null;
             if (projectResources != null)
             {
                 projectResources.Close();
                 projectResources = null;
             }
             FlexCompilerShell.Cleanup(); // clear compile cache for this project
+            Webserver.KillServer();
 
             if (!internalClosing)
             {
@@ -621,7 +658,7 @@ namespace ProjectManager
                 PluginBase.CurrentSDK = null;
                 PluginBase.MainForm.RefreshUI();
 
-                BroadcastProjectInfo();
+                BroadcastProjectInfo(null);
                 projectActions.UpdateASCompletion(MainForm, null);
             }
             TabColors.UpdateTabColors(Settings);
@@ -647,16 +684,16 @@ namespace ProjectManager
             using (ClasspathDialog dialog = new ClasspathDialog(Settings))
             {
                 dialog.Language = "as2";
+                Project project = activeProject;
                 if (project != null && project.Language != "*")
-                {
                     dialog.Language = project.Language;
-                }
                 dialog.ShowDialog(pluginUI);
             }
         }
 
         void OpenProjectProperties()
         {
+            Project project = activeProject;
             using (PropertiesDialog dialog = project.CreatePropertiesDialog())
             {
                 project.UpdateVars(false);
@@ -671,7 +708,7 @@ namespace ProjectManager
                 {
                     project.PropertiesChanged();
                     project.UpdateVars(true);
-                    BroadcastProjectInfo();
+                    BroadcastProjectInfo(project);
                     project.Save();
                     menus.ProjectChanged(project);
                 }
@@ -720,7 +757,9 @@ namespace ProjectManager
         void OpenSwf(string path)
         {
             DataEvent de;
+            Webserver.Port = Settings.WebserverPort;
 
+            Project project = activeProject; // TODO this should be the runnable project
             if (path == null)
             {
                 if (project == null) return;
@@ -776,6 +815,29 @@ namespace ProjectManager
                     psi.WorkingDirectory = project.Directory;
                     ProcessHelper.StartAsync(psi);
                 }
+            }
+            else if (project.TestMovieBehavior == TestMovieBehavior.Webserver)
+            {
+                if (project.TraceEnabled && project.EnableInteractiveDebugger)
+                {
+                    de = new DataEvent(EventType.Command, "AS3Context.StartProfiler", null);
+                    EventManager.DispatchEvent(this, de);
+                    de = new DataEvent(EventType.Command, "AS3Context.StartDebugger", null);
+                    EventManager.DispatchEvent(this, de);
+                }
+                string doc = project.TestMovieCommand;
+                try
+                {
+                    if (string.IsNullOrEmpty(project.TestMovieCommand))
+                    {
+                        doc = project.OutputPathAbsolute;
+                        if (File.Exists(doc)) doc = Path.GetDirectoryName(doc);
+                    }
+                    doc = project.GetAbsolutePath(doc);
+                    doc = project.FixDebugReleasePath(doc);
+                    Webserver.StartServer(doc);
+                }
+                catch { }
             }
             else if (project.TestMovieBehavior == TestMovieBehavior.Custom)
             {
@@ -851,14 +913,14 @@ namespace ProjectManager
             BroadcastBuildFailed(project);
         }
 
-        private bool ProjectBeforeSave(string fileName)
+        private bool ProjectBeforeSave(Project project, string fileName)
         {
             DataEvent de = new DataEvent(EventType.Command, ProjectManagerEvents.BeforeSave, fileName);
             EventManager.DispatchEvent(project, de);
             return !de.Handled; // saving handled or not allowed
         }
 
-        private void ProjectClasspathsChanged()
+        private void ProjectClasspathsChanged(Project project)
         {
             if (!listenToPathChange) return;
             listenToPathChange = false;
@@ -871,27 +933,31 @@ namespace ProjectManager
 
         private void NewProject()
         {
-            SetProject(projectActions.NewProject() ?? project);
+            Project project = projectActions.NewProject();
+            if (project != null) SetProject(project);
         }
 
         private void OpenProject()
         {
-            SetProject(projectActions.OpenProject() ?? project);
+            Project project = projectActions.OpenProject();
+            if (project != null) SetProject(project);
         }
 
         private void ImportProject()
         {
-            string imported = projectActions.ImportProject();
-            if (imported != null) OpenProjectSilent(imported);
+            string project = projectActions.ImportProject();
+            if (project != null) OpenProjectSilent(project);
         }
 
         private void OpenProjectSilent(string projectPath)
         {
-            SetProject(projectActions.OpenProjectSilent(projectPath) ?? project);
+            Project project = projectActions.OpenProjectSilent(projectPath);
+            if (project != null) SetProject(project);
         }
 
         private void TestMovie()
         {
+            Project project = activeProject; // TODO we need a runnable project
             bool noTrace = pluginUI.IsTraceDisabled;
             DataEvent de = new DataEvent(EventType.Command, ProjectManagerEvents.TestProject, (noTrace) ? "Release" : "Debug");
             EventManager.DispatchEvent(this, de);
@@ -904,10 +970,13 @@ namespace ProjectManager
 
         private void BuildProject() 
         {
+            Project project = activeProject; // TODO build all projects
+
             bool noTrace = pluginUI.IsTraceDisabled;
             DataEvent de = new DataEvent(EventType.Command, ProjectManagerEvents.BuildProject, (noTrace) ? "Release" : "Debug");
             EventManager.DispatchEvent(this, de);
             if (de.Handled) return;
+
             if (!buildActions.Build(project, false, noTrace))
             {
                 BroadcastBuildFailed(project);
@@ -916,6 +985,8 @@ namespace ProjectManager
 
         private void CleanProject()
         {
+            Project project = activeProject; // TODO clean all projects
+
             DataEvent de = new DataEvent(EventType.Command, ProjectManagerEvents.CleanProject, project);
             EventManager.DispatchEvent(this, de);
             if (de.Handled) return;
@@ -928,18 +999,37 @@ namespace ProjectManager
         private void FileDeleted(string path)
         {
             PluginCore.Managers.DocumentManager.CloseDocuments(path);
-            projectActions.RemoveAllReferences(project, path);
+            Project project = Tree.ProjectOf(path);
+            if (project != null)
+            {
+                projectActions.RemoveAllReferences(project, path);
+                project.Save();
+            }
             pluginUI.WatchParentOf(path);
-            project.Save();
         }
 
         private void FileMoved(string fromPath, string toPath)
         {
+            Project project = Tree.ProjectOf(fromPath);
+            Project projectTo = Tree.ProjectOf(toPath);
+            if (project != null && project != projectTo)
+            {
+                if (project.IsCompileTarget(fromPath) || project.IsLibraryAsset(fromPath))
+                {
+                    ErrorManager.ShowInfo("The project maintains a reference on this file preventing this modification.");
+                    return;
+                }
+            }
+
             PluginCore.Managers.DocumentManager.MoveDocuments(fromPath, toPath);
-            projectActions.MoveReferences(project, fromPath, toPath);
+            if (project != null)
+            {
+                projectActions.MoveReferences(project, fromPath, toPath);
+                project.Save();
+            }
             pluginUI.WatchParentOf(fromPath);
             pluginUI.WatchParentOf(toPath);
-            project.Save();
+
             Hashtable data = new Hashtable();
             data["fromPath"] = fromPath;
             data["toPath"] = toPath;
@@ -993,7 +1083,7 @@ namespace ProjectManager
             EventManager.DispatchEvent(this, de);
         }
 
-        public void BroadcastProjectInfo()
+        public void BroadcastProjectInfo(Project project)
         {
             DataEvent de = new DataEvent(EventType.Command, ProjectManagerEvents.Project, project);
             EventManager.DispatchEvent(this, de);
@@ -1074,7 +1164,10 @@ namespace ProjectManager
             // special behavior if this is a fake export node inside a SWF file
             ExportNode node = Tree.SelectedNode as ExportNode;
             string path = (node != null) ? node.ContainingSwfPath : Tree.SelectedPath;
-            projectActions.InsertFile(MainForm, project, path, node);
+            Project project = Tree.ProjectOf(path);
+            if (project != null)
+                projectActions.InsertFile(MainForm, project, path, node);
+            // TODO better handling / report invalid action
         }
 
         private void TreeAddLibraryItems()
@@ -1082,18 +1175,27 @@ namespace ProjectManager
             // we want to deselect all nodes when toggling library so you can see
             // them turn blue to get some feedback
             string[] selectedPaths = Tree.SelectedPaths;
+            Project project = Tree.ProjectOf(selectedPaths[0]);
             Tree.SelectedNodes = null;
-            projectActions.ToggleLibraryAsset(project, selectedPaths);
+            if (project != null)
+                projectActions.ToggleLibraryAsset(project, selectedPaths);
+            // TODO report invalid action
         }
 
         private void TreeAlwaysCompileItems()
         {
-            projectActions.ToggleAlwaysCompile(project, Tree.SelectedPaths);
+            Project project = Tree.ProjectOf(Tree.SelectedPaths[0]);
+            if (project != null)
+                projectActions.ToggleAlwaysCompile(project, Tree.SelectedPaths);
+            // TODO report invalid action
         }
 
         private void TreeDocumentClass()
         {
-            projectActions.ToggleDocumentClass(project, Tree.SelectedPaths);
+            Project project = Tree.ProjectOf(Tree.SelectedPaths[0]);
+            if (project != null)
+                projectActions.ToggleDocumentClass(project, Tree.SelectedPaths);
+            // TODO report invalid action
         }
 
         private void TreeBrowseItem()
@@ -1125,17 +1227,23 @@ namespace ProjectManager
 
         private void TreeLibraryOptions()
         {
-            LibraryAssetDialog dialog = new LibraryAssetDialog(Tree.SelectedAsset, project);
-            if (dialog.ShowDialog(pluginUI) == DialogResult.OK)
+            Project project = Tree.ProjectOf(Tree.SelectedAsset.Path);
+            if (project != null)
             {
-                Tree.SelectedNode.Refresh(false);
-                project.Save();
+                LibraryAssetDialog dialog = new LibraryAssetDialog(Tree.SelectedAsset, project);
+                if (dialog.ShowDialog(pluginUI) == DialogResult.OK)
+                {
+                    Tree.SelectedNode.Refresh(false);
+                    project.Save();
+                }
             }
         }
 
         private void TreeAddFileFromTemplate(string templatePath, bool noName)
         {
-            fileActions.AddFileFromTemplate(project, Tree.SelectedPath, templatePath, noName);
+            Project project = Tree.ProjectOf(Tree.SelectedNode);
+            if (project != null)
+                fileActions.AddFileFromTemplate(project, Tree.SelectedPath, templatePath, noName);
         }
 
         private void TreeAddFolder()
@@ -1145,7 +1253,9 @@ namespace ProjectManager
 
         private void TreeAddAsset()
         {
-            fileActions.AddLibraryAsset(project, Tree.SelectedPath);
+            Project project = Tree.ProjectOf(Tree.SelectedPath);
+            if (project != null)
+                fileActions.AddLibraryAsset(project, Tree.SelectedPath);
         }
 
         private void TreeAddExistingFile()
@@ -1155,11 +1265,15 @@ namespace ProjectManager
 
         private void TreeHideItems()
         {
-            projectActions.ToggleHidden(project, Tree.SelectedPaths);
+            Project project = Tree.ProjectOf(Tree.SelectedPath);
+            if (project != null)
+                projectActions.ToggleHidden(project, Tree.SelectedPaths);
+            // TODO we should be able to hide elements from a classpath reference
         }
 
         public void ToggleShowHidden()
         {
+            Project project = activeProject; // TODO apply to all projects
             projectActions.ToggleShowHidden(project);
             pluginUI.ShowHiddenPaths(project.ShowHiddenPaths);
         }
@@ -1239,7 +1353,7 @@ namespace ProjectManager
             if (buildTimer.Tag == null)
             {
                 Project project = ProjectLoader.Load(buildQueue.Dequeue());
-                Boolean debugging = this.buildingAll ? !this.project.TraceEnabled : !project.TraceEnabled;
+                Boolean debugging = this.buildingAll ? !activeProject.TraceEnabled : !project.TraceEnabled;
                 this.buildActions.Build(project, false, debugging);
             } 
             else
@@ -1263,21 +1377,29 @@ namespace ProjectManager
         private void AddSourcePath()
         {
             String path = Tree.SelectedPath;
-            if (path.StartsWith(project.Directory)) path = project.GetRelativePath(path);
-            if (project.Classpaths.Count == 1 && project.Classpaths[0] == ".")
-                project.Classpaths.Clear();
-            project.Classpaths.Add(path);
-            project.Save();
-            project.OnClasspathChanged();
+            Project project = Tree.ProjectOf(path);
+            if (project != null)
+            {
+                if (path.StartsWith(project.Directory)) path = project.GetRelativePath(path);
+                if (project.Classpaths.Count == 1 && project.Classpaths[0] == ".")
+                    project.Classpaths.Clear();
+                project.Classpaths.Add(path);
+                project.Save();
+                project.OnClasspathChanged();
+            }
         }
 
         private void RemoveSourcePath()
         {
             String path = Tree.SelectedPath;
-            project.Classpaths.Remove(project.GetRelativePath(path));
-            if (project.Classpaths.Count == 0) project.Classpaths.Add(".");
-            project.Save();
-            project.OnClasspathChanged();
+            Project project = Tree.ProjectOf(path);
+            if (project != null)
+            {
+                project.Classpaths.Remove(project.GetRelativePath(path));
+                if (project.Classpaths.Count == 0) project.Classpaths.Add(".");
+                project.Save();
+                project.OnClasspathChanged();
+            }
         }
 
         private void CopyClassName()
@@ -1302,9 +1424,10 @@ namespace ProjectManager
         
         private void TreeSyncToMainFile()
         {
-            if(Tree.Project.CompileTargets.Count > 0)
+            if (activeProject != null && activeProject.CompileTargets.Count > 0)
             {
-               Tree.Select(Tree.Project.GetAbsolutePath(Tree.Project.CompileTargets[0]));
+                Tree.Select(activeProject.GetAbsolutePath(activeProject.CompileTargets[0]));
+                Tree.SelectedNode.EnsureVisible();
             }
         }
 

@@ -11,7 +11,7 @@ namespace TaskListPanel
     public class Settings
     {
         private Int32[] images = new Int32[] { 229, 197, 197 };
-        private String[] extensions = new String[] { ".as", ".mxml", ".txt" };
+        private String[] extensions = new String[] { ".js", ".txt" };
         private String[] groups = new String[] { "TODO", "FIXME", "BUG" };
         private String[] excluded = new String[0] {};
 
@@ -32,7 +32,7 @@ namespace TaskListPanel
         /// </summary>
         [DisplayName("File Extensions")]
         [LocalizedDescription("TaskListPanel.Description.FileExtensions")]
-        [DefaultValue(new String[] { ".as", ".mxml", ".txt" })]
+        [DefaultValue(new String[] { ".js", ".txt" })]
         public String[] FileExtensions
         {
             get { return this.extensions; }
