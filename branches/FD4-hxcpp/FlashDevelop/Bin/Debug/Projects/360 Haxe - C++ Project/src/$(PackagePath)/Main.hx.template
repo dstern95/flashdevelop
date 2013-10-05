@@ -1,6 +1,9 @@
 package $(PackageName);
 
 import cpp.Lib;
+#if HXCPP_DEBUGGER
+import debugger.HaxeRemote;
+#end
 
 /**
 $(CBI)* ...
@@ -10,6 +13,9 @@ $(CBI)*/
 class Main $(CSLB){
 	
 	static function main() $(CSLB){
+#if HXCPP_DEBUGGER
+		new HaxeRemote(true, "127.0.0.1");
+#end
 		
 	}
 	
