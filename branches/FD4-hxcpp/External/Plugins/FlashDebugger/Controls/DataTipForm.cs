@@ -38,7 +38,7 @@ namespace FlashDebugger.Controls
 		public void SetVariable(Variable variable, String path)
 		{
             DataTree.Nodes.Clear();
-            DataTree.AddNode(new FlashDataNode(variable, path));
+            DataTree.AddNode(new FlashDataNode(variable, path, PluginMain.debugManager.FlashInterface.Session));
             DoResize();
         }
 

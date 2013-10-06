@@ -70,7 +70,7 @@ namespace FlashDebugger.Controls
                     ValueExp exp = builder.parse(new java.io.StringReader(item));
                     var ctx = new ExpressionContext(PluginMain.debugManager.FlashInterface.Session, PluginMain.debugManager.FlashInterface.Session.getFrames()[PluginMain.debugManager.CurrentFrame]);
                     var obj = exp.evaluate(ctx);
-                    node = new FlashDataNode((Variable)obj, item);
+                    node = new FlashDataNode((Variable)obj, item, PluginMain.debugManager.FlashInterface.Session);
 				}
 				catch { }
 				node.Text = item;
