@@ -49,6 +49,9 @@ namespace FlashDebugger.Debugger.HxCpp
 			set
 			{
 				// todo
+#if false
+				Message ret = session.Request(Command.SetExpression(false, fullName, value));
+#endif
 				base.Value = value;
 			}
 		}
