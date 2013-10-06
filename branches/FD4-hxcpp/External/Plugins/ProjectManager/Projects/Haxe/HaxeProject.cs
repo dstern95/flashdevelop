@@ -36,7 +36,8 @@ namespace ProjectManager.Projects.Haxe
                     && ((movieOptions.Platform == HaxeMovieOptions.NME_PLATFORM && TargetBuild == "flash")
                         || movieOptions.Platform == HaxeMovieOptions.FLASHPLAYER_PLATFORM
                         || movieOptions.Platform == HaxeMovieOptions.AIR_PLATFORM
-                        || movieOptions.Platform == HaxeMovieOptions.AIR_MOBILE_PLATFORM);
+                        || movieOptions.Platform == HaxeMovieOptions.AIR_MOBILE_PLATFORM
+						|| movieOptions.Platform == HaxeMovieOptions.CPP_PLATFORM);
             } 
         }
 
@@ -320,6 +321,10 @@ namespace ProjectManager.Projects.Haxe
                     pr.Add("--no-inline");
                     pr.Add("-D fdb");
                 }
+				if (IsCppOutput && MovieOptions.DebuggerSupported && CompilerOptions.EnableDebug)
+				{
+					pr.Add("-D HXCPP_DEBUGGER");
+				}
             }
             return pr.ToArray();
         }

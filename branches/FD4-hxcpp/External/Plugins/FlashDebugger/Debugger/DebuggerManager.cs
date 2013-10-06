@@ -58,7 +58,7 @@ namespace FlashDebugger
             registerInterfaceEvents(m_FlashInterface);
 			m_HxCppInterface = new Debugger.HxCpp.HxCppInterface();
 			registerInterfaceEvents(m_HxCppInterface);
-			SelectDebugger(DebuggerEngine.HxCpp);
+			SelectDebugger(DebuggerEngine.Flash);
         }
 
         private void registerInterfaceEvents(DebuggerInterface debugger)

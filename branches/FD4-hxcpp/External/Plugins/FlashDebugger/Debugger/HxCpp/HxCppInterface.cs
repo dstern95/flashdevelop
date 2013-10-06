@@ -37,6 +37,7 @@ namespace FlashDebugger.Debugger.HxCpp
 		Manager manager;
 		Session session;
 		bool isSuspended;
+		bool initialThreadStop;
 
 		public bool Initialize()
 		{
@@ -49,12 +50,13 @@ namespace FlashDebugger.Debugger.HxCpp
 		{
 			try
 			{
+				isSuspended = false;
+				initialThreadStop = true;
+
 				manager.Listen();
 				session = manager.Accept();
 				session.Bind();
 				manager.StopListen();
-
-				isSuspended = false;
 
 				if (StartedEvent != null) { StartedEvent(this); };
 				// send some events
@@ -122,9 +124,29 @@ namespace FlashDebugger.Debugger.HxCpp
 					//Message.ThreadStopped x;
 					// store current location?
 					frames = null;
-					isSuspended = true; // TODO
-					if (PauseEvent != null) { PauseEvent(this); }
+
+					// the first thread stop is used to load breakpoints
+					if (initialThreadStop)
+					{
+						initialThreadStop = false;
+						isSuspended = true;
+						if (ScriptLoadedEvent != null) { ScriptLoadedEvent(this); }
+						continue;
+					}
+
+					// if we are already suspended, lets not call PauseEvent again.
+					// This was happening when the debugger thread encountered strange errors and then the loop would kill FD.
+					if (!isSuspended)
+					{
+						isSuspended = true; // TODO
+						if (PauseEvent != null) { PauseEvent(this); }
+					}
 				}
+				if (e is Message.ThreadStarted)
+				{
+					isSuspended = false;
+				}
+
 			}
 
 		}
