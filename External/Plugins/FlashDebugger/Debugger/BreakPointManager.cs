@@ -57,31 +57,6 @@ namespace FlashDebugger
             return Path.Combine(cacheDir, hashFileName + ".xml");
         }
 
-        public void InitBreakPoints()
-        {
-            foreach (PluginCore.ITabbedDocument doc in PluginBase.MainForm.Documents)
-            {
-                if (Path.GetExtension(doc.SciControl.FileName) == ".as" || Path.GetExtension(doc.SciControl.FileName) == ".mxml")
-                {
-					List<int> lines = GetMarkers(doc.SciControl, ScintillaHelper.markerBPEnabled);
-					BreakPointInfo cbinfo = m_BreakPointList.Find(delegate(BreakPointInfo info)
-                    {
-                        return info.FileFullPath == doc.FileName;
-                    });
-                    string exp = string.Empty;
-                    if (cbinfo != null)
-                    {
-                        exp = cbinfo.Exp;
-						m_BreakPointList.Remove(cbinfo);
-                    }
-                    foreach (int i in lines)
-                    {
-						m_BreakPointList.Add(new BreakPointInfo(doc.SciControl.FileName, i, exp, false, true));
-                    }
-                }
-            }
-        }
-
         public void ClearAll()
         {
 			m_BreakPointList.Clear();
@@ -196,15 +171,12 @@ namespace FlashDebugger
             {
                 ScintillaControl sci = documents[i].SciControl;
 				if (sci == null) continue;
-                if (Path.GetExtension(sci.FileName) == ".as" || Path.GetExtension(sci.FileName) == ".mxml")
+				foreach (BreakPointInfo info in m_BreakPointList)
                 {
-					foreach (BreakPointInfo info in m_BreakPointList)
+					if (info.FileFullPath == sci.FileName && !info.IsDeleted)
                     {
-						if (info.FileFullPath == sci.FileName && !info.IsDeleted)
-                        {
-							if (info.Line < 0 || info.Line + 1 > sci.LineCount) continue;
-							sci.MarkerAdd(info.Line, info.IsEnabled ? ScintillaHelper.markerBPEnabled : ScintillaHelper.markerBPDisabled);
-                        }
+						if (info.Line < 0 || info.Line + 1 > sci.LineCount) continue;
+						sci.MarkerAdd(info.Line, info.IsEnabled ? ScintillaHelper.markerBPEnabled : ScintillaHelper.markerBPDisabled);
                     }
                 }
             }
