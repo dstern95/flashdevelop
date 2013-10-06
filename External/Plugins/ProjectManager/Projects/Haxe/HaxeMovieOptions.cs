@@ -32,7 +32,7 @@ namespace ProjectManager.Projects.Haxe
             {
                 return (Platform == FLASHPLAYER_PLATFORM && MajorVersion >= 9)
                     || Platform == AIR_PLATFORM || Platform == AIR_MOBILE_PLATFORM
-                    || Platform == NME_PLATFORM;
+                    || Platform == NME_PLATFORM || Platform == CPP_PLATFORM;
             }
         }
 

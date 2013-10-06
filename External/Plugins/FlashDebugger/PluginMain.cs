@@ -11,6 +11,7 @@ using PluginCore.Utilities;
 using ProjectManager.Projects;
 using ProjectManager.Projects.AS3;
 using PluginCore;
+using ProjectManager.Projects.Haxe;
 
 namespace FlashDebugger
 {
@@ -157,6 +158,18 @@ namespace FlashDebugger
                     {
                         if (settingObject.StartDebuggerOnTestMovie)
                         {
+							// select the debugger implementation
+							DebuggerEngine engine = DebuggerEngine.Flash;
+							if (PluginBase.CurrentProject is HaxeProject)
+							{
+								HaxeProject hxproject = (HaxeProject)PluginBase.CurrentProject;
+								if (hxproject.IsCppOutput)
+								{
+									engine = DebuggerEngine.HxCpp;
+								}
+							}
+							debugManager.SelectDebugger(engine);
+
                             if (debugManager.Start(buildevnt.Data != null)) buildevnt.Handled = true;
                         }
                         return;
@@ -221,7 +234,6 @@ namespace FlashDebugger
                     if (buildevnt.Action == ProjectManager.ProjectManagerEvents.TestProject)
                     {
                         menusHelper.UpdateMenuState(this, DebuggerState.Initializing);
-						debugManager.Start(true);
 					}
                     break;
             }
