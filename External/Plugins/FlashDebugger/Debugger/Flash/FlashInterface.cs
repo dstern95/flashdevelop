@@ -836,7 +836,7 @@ namespace FlashDebugger.Debugger.Flash
 			FlashDataNode[] ret = new FlashDataNode[vars.Length];
 			for (int i = 0; i < vars.Length; i++)
 			{
-				ret[i] = new FlashDataNode(vars[i]);
+				ret[i] = new FlashDataNode(vars[i], PluginMain.debugManager.FlashInterface.Session);
 			}
 			return ret;
 		}

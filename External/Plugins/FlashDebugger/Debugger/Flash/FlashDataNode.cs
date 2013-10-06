@@ -10,6 +10,7 @@ namespace FlashDebugger.Debugger.Flash
     public class FlashDataNode : DataNode
     {
         private Variable m_Value;
+		private Session m_Session;
 
         public override string Value
         {
@@ -145,8 +146,7 @@ namespace FlashDebugger.Debugger.Flash
             {
                 try
                 {
-                    FlashInterface flashInterface = PluginMain.debugManager.FlashInterface;
-                    if (Variable != null && Variable.hasValueChanged(flashInterface.Session))
+                    if (Variable != null && Variable.hasValueChanged(m_Session))
                     {
                         return true;
                     }
@@ -169,14 +169,13 @@ namespace FlashDebugger.Debugger.Flash
         public override void LoadChildren()
         {
             Nodes.Clear();
-            FlashInterface flashInterface = PluginMain.debugManager.FlashInterface;
             List<DataNode> nodes = new List<DataNode>();
             List<DataNode> inherited = new List<DataNode>();
             List<DataNode> statics = new List<DataNode>();
             int tmpLimit = ChildrenShowLimit;
-            foreach (Variable member in Variable.getValue().getMembers(flashInterface.Session))
+            foreach (Variable member in Variable.getValue().getMembers(m_Session))
             {
-                DataNode memberNode = new FlashDataNode(member, VariablePath + "." + member.getName());
+                DataNode memberNode = new FlashDataNode(member, VariablePath + "." + member.getName(), m_Session);
 
                 if (member.isAttributeSet(VariableAttribute_.IS_STATIC))
                 {
@@ -216,7 +215,7 @@ namespace FlashDebugger.Debugger.Flash
             {
                 if (ch.Equals("flash.display::DisplayObjectContainer"))
                 {
-                    double numChildren = ((java.lang.Double)Variable.getValue().getMemberNamed(flashInterface.Session, "numChildren").getValue().getValueAsObject()).doubleValue();
+                    double numChildren = ((java.lang.Double)Variable.getValue().getMemberNamed(m_Session, "numChildren").getValue().getValueAsObject()).doubleValue();
                     DataNode childrenNode = new DataNode("[children]");
                     for (int i = 0; i < numChildren; i++)
                     {
@@ -225,10 +224,10 @@ namespace FlashDebugger.Debugger.Flash
                             IASTBuilder b = new ASTBuilder(false);
                             string cmd = VariablePath + ".getChildAt(" + i + ")";
                             ValueExp exp = b.parse(new java.io.StringReader(cmd));
-                            var ctx = new ExpressionContext(flashInterface.Session, flashInterface.Session.getFrames()[PluginMain.debugManager.CurrentFrame]);
+                            var ctx = new ExpressionContext(m_Session, m_Session.getFrames()[PluginMain.debugManager.CurrentFrame]);
                             var obj = exp.evaluate(ctx);
                             if (obj is flash.tools.debugger.concrete.DValue) obj = new flash.tools.debugger.concrete.DVariable("getChildAt(" + i + ")", (flash.tools.debugger.concrete.DValue)obj);
-                            DataNode childNode = new FlashDataNode((Variable)obj, cmd);
+                            DataNode childNode = new FlashDataNode((Variable)obj, cmd, m_Session);
                             childNode.Text = "child_" + i;
                             childrenNode.Nodes.Add(childNode);
                         }
@@ -238,10 +237,10 @@ namespace FlashDebugger.Debugger.Flash
                 }
                 else if (ch.Equals("flash.events::EventDispatcher"))
                 {
-                    Variable list = Variable.getValue().getMemberNamed(flashInterface.Session, "listeners");
+                    Variable list = Variable.getValue().getMemberNamed(m_Session, "listeners");
                     var omg = list.getName();
                     /*
-                    double numChildren = ((java.lang.Double)node.Variable.getValue().getMemberNamed(flashInterface.Session, "numChildren").getValue().getValueAsObject()).doubleValue();
+                    double numChildren = ((java.lang.Double)node.Variable.getValue().getMemberNamed(m_Session, "numChildren").getValue().getValueAsObject()).doubleValue();
                     DataNode childrenNode = new DataNode("[children]");
                     for (int i = 0; i < numChildren; i++)
                     {
@@ -251,7 +250,7 @@ namespace FlashDebugger.Debugger.Flash
                             IASTBuilder b = new ASTBuilder(false);
                             string cmd = GetVariablePath(node) + ".getChildAt(" + i + ")";
                             ValueExp exp = b.parse(new java.io.StringReader(cmd));
-                            var ctx = new ExpressionContext(flashInterface.Session, flashInterface.Session.getFrames()[PluginMain.debugManager.CurrentFrame]);
+                            var ctx = new ExpressionContext(m_Session, m_Session.getFrames()[PluginMain.debugManager.CurrentFrame]);
                             var obj = exp.evaluate(ctx);
                             if (obj is flash.tools.debugger.concrete.DValue) obj = new flash.tools.debugger.concrete.DVariable("child_" + i, (flash.tools.debugger.concrete.DValue)obj);
                             DataNode childNode = new DataNode((Variable)obj);
@@ -277,16 +276,17 @@ namespace FlashDebugger.Debugger.Flash
             }
         }
 
-        public FlashDataNode(Variable value)
-            : this(value, value.getName())
+        public FlashDataNode(Variable value, Session session)
+            : this(value, value.getName(), session)
         {
         }
 
-        public FlashDataNode(Variable value, string variablePath)
+        public FlashDataNode(Variable value, string variablePath, Session session)
             : base(value.getName())
         {
             m_Value = value;
             m_VariablePath = variablePath;
-        }
+			m_Session = session;
+		}
     }
 }
